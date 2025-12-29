@@ -4,15 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cherokee Chooters Shred - Weight Tracker</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.10.3/Recharts.js"></script>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- React -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Recharts -->
+    <script src="https://unpkg.com/recharts@2.5.0/dist/Recharts.js"></script>
+    
+    <!-- Babel Standalone -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
     <style>
         body {
@@ -96,7 +104,6 @@
 
             const [loading, setLoading] = useState(true);
 
-            // Load data from Firebase on mount and listen for changes
             useEffect(() => {
                 const unsubscribeWeights = db.collection('weights').onSnapshot((snapshot) => {
                     const weightsData = {
@@ -117,7 +124,6 @@
                         }
                     });
 
-                    // Sort weights by timestamp for each person
                     Object.keys(weightsData).forEach(person => {
                         weightsData[person].sort((a, b) => a.timestamp - b.timestamp);
                     });
@@ -199,19 +205,16 @@
                 if (isNaN(goal) || goal <= 0) return;
 
                 try {
-                    // Check if goal exists for this person
                     const goalQuery = await db.collection('goals')
                         .where('person', '==', person)
                         .get();
 
                     if (goalQuery.empty) {
-                        // Create new goal
                         await db.collection('goals').add({
                             person: person,
                             goal: goal
                         });
                     } else {
-                        // Update existing goal
                         const docId = goalQuery.docs[0].id;
                         await db.collection('goals').doc(docId).update({
                             goal: goal
