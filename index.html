@@ -223,6 +223,27 @@
             margin: 2rem;
         }
         
+        .chart-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .chart-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+        
         @media (max-width: 768px) {
             body {
                 padding: 1rem;
@@ -239,6 +260,18 @@
             .grid {
                 grid-template-columns: 1fr;
             }
+            
+            .chart-wrapper {
+                height: 300px;
+            }
+            
+            .chart-title {
+                font-size: 1.25rem;
+            }
+            
+            .chart-container {
+                padding: 1rem;
+            }
         }
     </style>
 </head>
@@ -250,6 +283,9 @@
     <!-- Firebase v8 -->
     <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <script defer>
         // Wait for Firebase scripts to load
@@ -298,6 +334,7 @@
         let weights = { Adam: [], Sean: [], Daniel: [], Mark: [] };
         let goals = { Adam: null, Sean: null, Daniel: null, Mark: null };
         let loaded = false;
+        let chart = null;
 
         // Listen to Firebase updates
         console.log('Setting up listeners...');
@@ -481,6 +518,182 @@
             return `${date.toLocaleDateString()} at ${timeStr}`;
         }
 
+        function updateChart() {
+            const hasData = people.some(p => weights[p].length > 0);
+            if (!hasData) return;
+
+            // Collect all timestamps and data points
+            const allData = [];
+            people.forEach(person => {
+                weights[person].forEach(entry => {
+                    allData.push({
+                        timestamp: entry.timestamp,
+                        person: person,
+                        weight: entry.weight
+                    });
+                });
+            });
+
+            // Sort by timestamp
+            allData.sort((a, b) => a.timestamp - b.timestamp);
+
+            // Build datasets for each person
+            const datasets = people.map(person => {
+                const personData = [];
+                const lastKnownWeight = {};
+
+                allData.forEach(point => {
+                    if (point.person === person) {
+                        lastKnownWeight[person] = point.weight;
+                    }
+                    
+                    if (lastKnownWeight[person] !== undefined) {
+                        personData.push({
+                            x: point.timestamp,
+                            y: lastKnownWeight[person]
+                        });
+                    }
+                });
+
+                return {
+                    label: person,
+                    data: personData,
+                    borderColor: colors[person],
+                    backgroundColor: colors[person] + '33',
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    tension: 0.1
+                };
+            }).filter(dataset => dataset.data.length > 0);
+
+            // Add goal lines as datasets
+            people.forEach(person => {
+                if (goals[person] && weights[person].length > 0) {
+                    const firstTimestamp = weights[person][0].timestamp;
+                    const lastTimestamp = weights[person][weights[person].length - 1].timestamp;
+                    
+                    datasets.push({
+                        label: `${person}'s Goal`,
+                        data: [
+                            { x: firstTimestamp, y: goals[person] },
+                            { x: lastTimestamp, y: goals[person] }
+                        ],
+                        borderColor: colors[person],
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        tension: 0
+                    });
+                }
+            });
+
+            // Destroy old chart if exists
+            if (chart) {
+                chart.destroy();
+            }
+
+            // Create new chart
+            const ctx = document.getElementById('weightChart');
+            if (!ctx) return;
+
+            // Check if mobile
+            const isMobile = window.innerWidth < 768;
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day',
+                                displayFormats: {
+                                    day: isMobile ? 'M/D' : 'MM/DD'
+                                },
+                                tooltipFormat: 'MM/DD/YYYY h:mm a'
+                            },
+                            title: {
+                                display: !isMobile,
+                                text: 'Date',
+                                font: {
+                                    size: isMobile ? 10 : 12
+                                }
+                            },
+                            ticks: {
+                                maxRotation: isMobile ? 45 : 0,
+                                minRotation: isMobile ? 45 : 0,
+                                font: {
+                                    size: isMobile ? 9 : 11
+                                }
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: isMobile ? 'lbs' : 'Weight (lbs)',
+                                font: {
+                                    size: isMobile ? 10 : 12
+                                }
+                            },
+                            ticks: {
+                                font: {
+                                    size: isMobile ? 10 : 11
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                padding: isMobile ? 10 : 20,
+                                font: {
+                                    size: isMobile ? 11 : 12
+                                },
+                                usePointStyle: true,
+                                boxWidth: isMobile ? 6 : 8
+                            }
+                        },
+                        tooltip: {
+                            enabled: true,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: isMobile ? 8 : 12,
+                            bodyFont: {
+                                size: isMobile ? 11 : 13
+                            },
+                            titleFont: {
+                                size: isMobile ? 12 : 14
+                            },
+                            callbacks: {
+                                label: function(context) {
+                                    const date = new Date(context.parsed.x);
+                                    return `${context.dataset.label}: ${context.parsed.y.toFixed(1)} lbs`;
+                                },
+                                title: function(context) {
+                                    if (context.length > 0) {
+                                        const date = new Date(context[0].parsed.x);
+                                        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                    }
+                                    return '';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
         function render() {
             console.log('Rendering...');
             const hasData = people.some(p => weights[p].length > 0);
@@ -520,6 +733,15 @@
                                 <div class="stat-label">🏆 Percentage Leader</div>
                                 <div class="stat-value">${pctLeader.name}</div>
                                 <div class="stat-subtext">${pctLeader.percentage.toFixed(1)}% lost</div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    ${hasData ? `
+                        <div class="chart-container">
+                            <h2 class="chart-title">Progress Chart</h2>
+                            <div class="chart-wrapper">
+                                <canvas id="weightChart"></canvas>
                             </div>
                         </div>
                     ` : ''}
@@ -582,6 +804,11 @@
                     </div>
                 </div>
             `;
+            
+            // Update chart after render
+            if (hasData) {
+                setTimeout(updateChart, 100);
+            }
         }
 
         console.log('Setup complete!');
