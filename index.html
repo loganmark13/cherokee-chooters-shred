@@ -244,6 +244,49 @@
             width: 100%;
         }
         
+        .table-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+        
+        .table-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: #f3f4f6;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        tr:hover {
+            background: #f9fafb;
+        }
+        
+        .name-cell {
+            font-weight: 600;
+        }
+        
         @media (max-width: 768px) {
             body {
                 padding: 1rem;
@@ -272,6 +315,15 @@
             .chart-container {
                 padding: 1rem;
             }
+            
+            th, td {
+                padding: 0.5rem;
+                font-size: 0.875rem;
+            }
+            
+            .table-title {
+                font-size: 1.25rem;
+            }
         }
     </style>
 </head>
@@ -284,9 +336,8 @@
     <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
-    <!-- Chart.js with date adapter -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
 
     <script defer>
         // Wait for Firebase scripts to load
@@ -519,67 +570,87 @@
             return `${date.toLocaleDateString()} at ${timeStr}`;
         }
 
+        function getAllEntries() {
+            const allEntries = [];
+            people.forEach(person => {
+                weights[person].forEach(entry => {
+                    allEntries.push({
+                        person: person,
+                        weight: entry.weight,
+                        timestamp: entry.timestamp
+                    });
+                });
+            });
+            // Sort by timestamp, newest first
+            allEntries.sort((a, b) => b.timestamp - a.timestamp);
+            return allEntries;
+        }
+
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            const dateStr = date.toLocaleDateString();
+            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return `${dateStr} ${timeStr}`;
+        }
+
         function updateChart() {
             const hasData = people.some(p => weights[p].length > 0);
             if (!hasData) return;
 
-            // Collect all timestamps and data points
-            const allData = [];
+            // Collect all unique timestamps and sort them
+            const allTimestamps = new Set();
             people.forEach(person => {
                 weights[person].forEach(entry => {
-                    allData.push({
-                        timestamp: entry.timestamp,
-                        person: person,
-                        weight: entry.weight
-                    });
+                    allTimestamps.add(entry.timestamp);
                 });
             });
-
-            // Sort by timestamp
-            allData.sort((a, b) => a.timestamp - b.timestamp);
+            
+            const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
+            
+            // Create labels from timestamps
+            const labels = sortedTimestamps.map(ts => {
+                const date = new Date(ts);
+                const month = date.getMonth() + 1;
+                const day = date.getDate();
+                const hours = date.getHours();
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                return `${month}/${day} ${hours}:${minutes}`;
+            });
 
             // Build datasets for each person
             const datasets = people.map(person => {
-                const personData = [];
-                const lastKnownWeight = {};
+                const data = [];
+                let lastWeight = null;
 
-                allData.forEach(point => {
-                    if (point.person === person) {
-                        lastKnownWeight[person] = point.weight;
+                sortedTimestamps.forEach(timestamp => {
+                    const entry = weights[person].find(w => w.timestamp === timestamp);
+                    if (entry) {
+                        lastWeight = entry.weight;
                     }
-                    
-                    if (lastKnownWeight[person] !== undefined) {
-                        personData.push({
-                            x: point.timestamp,
-                            y: lastKnownWeight[person]
-                        });
-                    }
+                    data.push(lastWeight);
                 });
 
                 return {
                     label: person,
-                    data: personData,
+                    data: data,
                     borderColor: colors[person],
                     backgroundColor: colors[person] + '33',
                     borderWidth: 3,
                     pointRadius: 5,
                     pointHoverRadius: 7,
-                    tension: 0.1
+                    tension: 0.1,
+                    spanGaps: false
                 };
-            }).filter(dataset => dataset.data.length > 0);
+            }).filter(dataset => dataset.data.some(d => d !== null));
 
-            // Add goal lines as datasets
+            // Add goal lines
             people.forEach(person => {
                 if (goals[person] && weights[person].length > 0) {
-                    const firstTimestamp = weights[person][0].timestamp;
-                    const lastTimestamp = weights[person][weights[person].length - 1].timestamp;
+                    const goalData = new Array(sortedTimestamps.length).fill(goals[person]);
                     
                     datasets.push({
                         label: `${person}'s Goal`,
-                        data: [
-                            { x: firstTimestamp, y: goals[person] },
-                            { x: lastTimestamp, y: goals[person] }
-                        ],
+                        data: goalData,
                         borderColor: colors[person],
                         backgroundColor: 'transparent',
                         borderWidth: 2,
@@ -599,12 +670,12 @@
             const ctx = document.getElementById('weightChart');
             if (!ctx) return;
 
-            // Check if mobile
             const isMobile = window.innerWidth < 768;
 
             chart = new Chart(ctx, {
                 type: 'line',
                 data: {
+                    labels: labels,
                     datasets: datasets
                 },
                 options: {
@@ -616,27 +687,21 @@
                     },
                     scales: {
                         x: {
-                            type: 'time',
-                            time: {
-                                unit: 'day',
-                                displayFormats: {
-                                    day: isMobile ? 'M/D' : 'MM/DD'
-                                },
-                                tooltipFormat: 'MM/DD/YYYY h:mm a'
-                            },
                             title: {
                                 display: !isMobile,
-                                text: 'Date',
+                                text: 'Date & Time',
                                 font: {
                                     size: isMobile ? 10 : 12
                                 }
                             },
                             ticks: {
-                                maxRotation: isMobile ? 45 : 0,
-                                minRotation: isMobile ? 45 : 0,
+                                maxRotation: isMobile ? 45 : 45,
+                                minRotation: isMobile ? 45 : 45,
                                 font: {
-                                    size: isMobile ? 9 : 11
-                                }
+                                    size: isMobile ? 9 : 10
+                                },
+                                autoSkip: true,
+                                maxTicksLimit: isMobile ? 6 : 10
                             }
                         },
                         y: {
@@ -678,15 +743,8 @@
                             },
                             callbacks: {
                                 label: function(context) {
-                                    const date = new Date(context.parsed.x);
+                                    if (context.parsed.y === null) return null;
                                     return `${context.dataset.label}: ${context.parsed.y.toFixed(1)} lbs`;
-                                },
-                                title: function(context) {
-                                    if (context.length > 0) {
-                                        const date = new Date(context[0].parsed.x);
-                                        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                                    }
-                                    return '';
                                 }
                             }
                         }
@@ -803,6 +861,30 @@
                             </div>
                         `).join('')}
                     </div>
+
+                    ${hasData ? `
+                        <div class="table-container">
+                            <h2 class="table-title">Weight Entry History</h2>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Weight</th>
+                                        <th>Timestamp</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${getAllEntries().map(entry => `
+                                        <tr>
+                                            <td class="name-cell" style="color: ${colors[entry.person]}">${entry.person}</td>
+                                            <td>${entry.weight} lbs</td>
+                                            <td>${formatTimestamp(entry.timestamp)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    ` : ''}
                 </div>
             `;
             
