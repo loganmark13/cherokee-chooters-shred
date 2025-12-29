@@ -5,37 +5,272 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cherokee Chooters Shred - Weight Tracker</title>
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    
-    <!-- React -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
-    <!-- Recharts -->
-    <script src="https://unpkg.com/recharts@2.5.0/dist/Recharts.js"></script>
-    
-    <!-- Babel Standalone -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(to bottom right, #eff6ff, #e0e7ff);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: #6b7280;
+            font-size: 1.1rem;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 2rem 0;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            min-width: 200px;
+        }
+        
+        .stat-card.cruise {
+            background: linear-gradient(to right, #06b6d4, #2563eb);
+            color: white;
+        }
+        
+        .stat-card.total {
+            background: linear-gradient(to right, #6366f1, #a855f7);
+            color: white;
+        }
+        
+        .stat-card.leader {
+            background: linear-gradient(to right, #fbbf24, #f97316);
+            color: white;
+        }
+        
+        .stat-card.leader-pct {
+            background: linear-gradient(to right, #4ade80, #10b981);
+            color: white;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        
+        .stat-subtext {
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .person-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .person-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        
+        .input-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        input {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-add {
+            background: #6366f1;
+            color: white;
+        }
+        
+        .btn-add:hover {
+            background: #4f46e5;
+        }
+        
+        .btn-goal {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-goal:hover {
+            background: #059669;
+        }
+        
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+            font-size: 0.875rem;
+            padding: 0.25rem 0.75rem;
+        }
+        
+        .btn-delete:hover {
+            background: #dc2626;
+        }
+        
+        .person-stats {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .stat-text {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .progress {
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 4rem;
+            font-size: 1.5rem;
+            color: #6b7280;
+        }
+        
+        .error {
+            text-align: center;
+            padding: 2rem;
+            color: #ef4444;
+            background: #fee;
+            border-radius: 0.5rem;
+            margin: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .stats {
+                flex-direction: column;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="root">
+        <div class="loading">Loading Firebase...</div>
+    </div>
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-        const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } = Recharts;
+    <!-- Firebase v8 -->
+    <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <script defer>
+        // Wait for Firebase scripts to load
+        function checkFirebase() {
+            if (typeof firebase !== 'undefined') {
+                console.log('Firebase loaded!');
+                initApp();
+            } else {
+                console.log('Waiting for Firebase...');
+                setTimeout(checkFirebase, 100);
+            }
+        }
+
+        // Start checking after DOM loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', checkFirebase);
+        } else {
+            checkFirebase();
+        }
+
+        function initApp() {
 
         // Initialize Firebase
         const firebaseConfig = {
@@ -44,551 +279,313 @@
             projectId: "cherokee-chooters-shred",
             storageBucket: "cherokee-chooters-shred.firebasestorage.app",
             messagingSenderId: "448611335080",
-            appId: "1:448611335080:web:eb9eb0688d9b846e0cbb9d",
-            measurementId: "G-CZTKBXD8BS"
+            appId: "1:448611335080:web:eb9eb0688d9b846e0cbb9d"
         };
 
+        console.log('Initializing Firebase...');
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        console.log('Firebase initialized!');
 
-        const Scale = ({ className }) => (
-            <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 3v18m-3-3l3 3 3-3M7 7l-3 9h18l-3-9" />
-            </svg>
-        );
-
-        const Target = ({ className }) => (
-            <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <circle cx="12" cy="12" r="6" />
-                <circle cx="12" cy="12" r="2" />
-            </svg>
-        );
-
-        const WeightTracker = () => {
-            const people = ['Adam', 'Sean', 'Daniel', 'Mark'];
-            const colors = {
-                Adam: '#3b82f6',
-                Sean: '#ef4444',
-                Daniel: '#10b981',
-                Mark: '#f59e0b'
-            };
-
-            const [weights, setWeights] = useState({
-                Adam: [],
-                Sean: [],
-                Daniel: [],
-                Mark: []
-            });
-
-            const [currentInputs, setCurrentInputs] = useState({
-                Adam: '',
-                Sean: '',
-                Daniel: '',
-                Mark: ''
-            });
-
-            const [goals, setGoals] = useState({
-                Adam: null,
-                Sean: null,
-                Daniel: null,
-                Mark: null
-            });
-
-            const [goalInputs, setGoalInputs] = useState({
-                Adam: '',
-                Sean: '',
-                Daniel: '',
-                Mark: ''
-            });
-
-            const [loading, setLoading] = useState(true);
-
-            useEffect(() => {
-                const unsubscribeWeights = db.collection('weights').onSnapshot((snapshot) => {
-                    const weightsData = {
-                        Adam: [],
-                        Sean: [],
-                        Daniel: [],
-                        Mark: []
-                    };
-
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
-                        if (weightsData[data.person] !== undefined) {
-                            weightsData[data.person].push({
-                                id: doc.id,
-                                timestamp: data.timestamp,
-                                weight: data.weight
-                            });
-                        }
-                    });
-
-                    Object.keys(weightsData).forEach(person => {
-                        weightsData[person].sort((a, b) => a.timestamp - b.timestamp);
-                    });
-
-                    setWeights(weightsData);
-                    setLoading(false);
-                });
-
-                const unsubscribeGoals = db.collection('goals').onSnapshot((snapshot) => {
-                    const goalsData = {
-                        Adam: null,
-                        Sean: null,
-                        Daniel: null,
-                        Mark: null
-                    };
-
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
-                        goalsData[data.person] = data.goal;
-                    });
-
-                    setGoals(goalsData);
-                });
-
-                return () => {
-                    unsubscribeWeights();
-                    unsubscribeGoals();
-                };
-            }, []);
-
-            const formatDateTime = (timestamp) => {
-                const date = new Date(timestamp);
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                return `${month}/${day} ${hours}:${minutes}`;
-            };
-
-            const handleInputChange = (person, value) => {
-                setCurrentInputs(prev => ({
-                    ...prev,
-                    [person]: value
-                }));
-            };
-
-            const handleGoalChange = (person, value) => {
-                setGoalInputs(prev => ({
-                    ...prev,
-                    [person]: value
-                }));
-            };
-
-            const addWeight = async (person) => {
-                const weight = parseFloat(currentInputs[person]);
-                if (isNaN(weight) || weight <= 0) return;
-
-                const timestamp = Date.now();
-
-                try {
-                    await db.collection('weights').add({
-                        person: person,
-                        weight: weight,
-                        timestamp: timestamp
-                    });
-
-                    setCurrentInputs(prev => ({
-                        ...prev,
-                        [person]: ''
-                    }));
-                } catch (error) {
-                    console.error('Error adding weight:', error);
-                    alert('Error saving weight. Please try again.');
-                }
-            };
-
-            const setGoal = async (person) => {
-                const goal = parseFloat(goalInputs[person]);
-                if (isNaN(goal) || goal <= 0) return;
-
-                try {
-                    const goalQuery = await db.collection('goals')
-                        .where('person', '==', person)
-                        .get();
-
-                    if (goalQuery.empty) {
-                        await db.collection('goals').add({
-                            person: person,
-                            goal: goal
-                        });
-                    } else {
-                        const docId = goalQuery.docs[0].id;
-                        await db.collection('goals').doc(docId).update({
-                            goal: goal
-                        });
-                    }
-
-                    setGoalInputs(prev => ({
-                        ...prev,
-                        [person]: ''
-                    }));
-                } catch (error) {
-                    console.error('Error setting goal:', error);
-                    alert('Error saving goal. Please try again.');
-                }
-            };
-
-            const deleteLastWeight = async (person) => {
-                if (weights[person].length === 0) return;
-
-                const lastEntry = weights[person][weights[person].length - 1];
-
-                try {
-                    await db.collection('weights').doc(lastEntry.id).delete();
-                } catch (error) {
-                    console.error('Error deleting weight:', error);
-                    alert('Error deleting weight. Please try again.');
-                }
-            };
-
-            const getChartData = () => {
-                const allEntries = [];
-                
-                people.forEach(person => {
-                    weights[person].forEach(entry => {
-                        allEntries.push({
-                            timestamp: entry.timestamp,
-                            person: person,
-                            weight: entry.weight,
-                            displayTime: formatDateTime(entry.timestamp)
-                        });
-                    });
-                });
-
-                allEntries.sort((a, b) => a.timestamp - b.timestamp);
-
-                const chartPoints = [];
-                const lastWeight = {};
-
-                allEntries.forEach(entry => {
-                    lastWeight[entry.person] = entry.weight;
-                    
-                    const point = {
-                        timestamp: entry.timestamp,
-                        displayTime: entry.displayTime
-                    };
-                    
-                    people.forEach(p => {
-                        if (lastWeight[p] !== undefined) {
-                            point[p] = lastWeight[p];
-                        }
-                    });
-                    
-                    chartPoints.push(point);
-                });
-
-                return chartPoints;
-            };
-
-            const chartData = getChartData();
-            const hasData = chartData.length > 0;
-
-            const getWeightLoss = (person) => {
-                if (weights[person].length < 2) return 0;
-                const firstWeight = weights[person][0].weight;
-                const lastWeight = weights[person][weights[person].length - 1].weight;
-                return firstWeight - lastWeight;
-            };
-
-            const getWeightLossPercentage = (person) => {
-                if (weights[person].length < 2) return 0;
-                const firstWeight = weights[person][0].weight;
-                const lastWeight = weights[person][weights[person].length - 1].weight;
-                const loss = firstWeight - lastWeight;
-                return (loss / firstWeight) * 100;
-            };
-
-            const getTotalWeightLoss = () => {
-                return people.reduce((total, person) => {
-                    return total + getWeightLoss(person);
-                }, 0);
-            };
-
-            const getDaysUntilCruise = () => {
-                const cruiseDate = new Date('2026-02-27');
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                cruiseDate.setHours(0, 0, 0, 0);
-                const diffTime = cruiseDate - today;
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                return diffDays;
-            };
-
-            const getLeaderByPounds = () => {
-                let leader = null;
-                let maxLoss = 0;
-                
-                people.forEach(person => {
-                    const loss = getWeightLoss(person);
-                    if (loss > maxLoss) {
-                        maxLoss = loss;
-                        leader = person;
-                    }
-                });
-                
-                return leader ? { name: leader, loss: maxLoss } : null;
-            };
-
-            const getLeaderByPercentage = () => {
-                let leader = null;
-                let maxPercentage = 0;
-                
-                people.forEach(person => {
-                    const percentage = getWeightLossPercentage(person);
-                    if (percentage > maxPercentage) {
-                        maxPercentage = percentage;
-                        leader = person;
-                    }
-                });
-                
-                return leader ? { name: leader, percentage: maxPercentage } : null;
-            };
-
-            const formatLastEntry = (timestamp) => {
-                const date = new Date(timestamp);
-                const today = new Date();
-                const yesterday = new Date(today);
-                yesterday.setDate(yesterday.getDate() - 1);
-
-                const dateStr = date.toLocaleDateString();
-                const todayStr = today.toLocaleDateString();
-                const yesterdayStr = yesterday.toLocaleDateString();
-
-                const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                if (dateStr === todayStr) {
-                    return `Today at ${timeStr}`;
-                } else if (dateStr === yesterdayStr) {
-                    return `Yesterday at ${timeStr}`;
-                } else {
-                    return `${date.toLocaleDateString()} at ${timeStr}`;
-                }
-            };
-
-            if (loading) {
-                return (
-                    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-                        <div className="text-center">
-                            <Scale className="w-16 h-16 text-indigo-600 mx-auto mb-4 animate-pulse" />
-                            <p className="text-xl text-gray-700">Loading...</p>
-                        </div>
-                    </div>
-                );
-            }
-
-            return (
-                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
-                    <div className="max-w-6xl mx-auto">
-                        <div className="text-center mb-8">
-                            <h1 className="text-5xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-3">
-                                <Scale className="w-12 h-12 text-indigo-600" />
-                                Cherokee Chooters Shred
-                                <Scale className="w-12 h-12 text-indigo-600" />
-                            </h1>
-                            <p className="text-gray-600">New Year, New You! Track your progress together 💪</p>
-                            
-                            <div className="mt-4 flex flex-col sm:flex-row gap-4 items-center justify-center">
-                                <div className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-8 py-4 rounded-lg shadow-lg">
-                                    <p className="text-sm font-medium uppercase tracking-wide">Days Until Cruise 🚢</p>
-                                    <p className="text-4xl font-bold mt-1">
-                                        {getDaysUntilCruise()}
-                                    </p>
-                                </div>
-                                
-                                {hasData && (
-                                    <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-8 py-4 rounded-lg shadow-lg">
-                                        <p className="text-sm font-medium uppercase tracking-wide">Total Weight Lost Together</p>
-                                        <p className="text-4xl font-bold mt-1">
-                                            {getTotalWeightLoss().toFixed(1)} lbs
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-
-                            {hasData && getLeaderByPounds() && (
-                                <div className="mt-6 flex flex-col sm:flex-row gap-4 items-center justify-center">
-                                    <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-3 rounded-lg shadow-lg">
-                                        <p className="text-xs font-medium uppercase tracking-wide">🏆 Pounds Leader</p>
-                                        <p className="text-2xl font-bold mt-1">
-                                            {getLeaderByPounds().name}
-                                        </p>
-                                        <p className="text-sm">
-                                            {getLeaderByPounds().loss.toFixed(1)} lbs lost
-                                        </p>
-                                    </div>
-                                    
-                                    <div className="bg-gradient-to-r from-green-400 to-emerald-500 text-white px-6 py-3 rounded-lg shadow-lg">
-                                        <p className="text-xs font-medium uppercase tracking-wide">🏆 Percentage Leader</p>
-                                        <p className="text-2xl font-bold mt-1">
-                                            {getLeaderByPercentage().name}
-                                        </p>
-                                        <p className="text-sm">
-                                            {getLeaderByPercentage().percentage.toFixed(1)}% lost
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                            {people.map(person => (
-                                <div key={person} className="bg-white rounded-lg shadow-md p-6">
-                                    <h3 className="text-xl font-semibold mb-4" style={{ color: colors[person] }}>
-                                        {person}
-                                    </h3>
-                                    
-                                    <div className="mb-4">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Today's Weight (lbs)
-                                        </label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="number"
-                                                step="0.1"
-                                                value={currentInputs[person]}
-                                                onChange={(e) => handleInputChange(person, e.target.value)}
-                                                onKeyPress={(e) => e.key === 'Enter' && addWeight(person)}
-                                                className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                                placeholder="Enter weight"
-                                            />
-                                            <button
-                                                onClick={() => addWeight(person)}
-                                                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-                                            >
-                                                Add
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-                                            <Target className="w-4 h-4" />
-                                            Goal Weight (lbs)
-                                        </label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="number"
-                                                step="0.1"
-                                                value={goalInputs[person]}
-                                                onChange={(e) => handleGoalChange(person, e.target.value)}
-                                                onKeyPress={(e) => e.key === 'Enter' && setGoal(person)}
-                                                className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                                placeholder={goals[person] ? `Current: ${goals[person]}` : "Set goal"}
-                                            />
-                                            <button
-                                                onClick={() => setGoal(person)}
-                                                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                                            >
-                                                Set
-                                            </button>
-                                        </div>
-                                        {goals[person] && (
-                                            <p className="text-sm text-gray-600 mt-1">
-                                                Goal: {goals[person]} lbs
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {weights[person].length > 0 && (
-                                        <div className="mt-3">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <p className="text-sm text-gray-600">
-                                                        Latest: {weights[person][weights[person].length - 1].weight} lbs
-                                                    </p>
-                                                    <p className="text-xs text-gray-500">
-                                                        {formatLastEntry(weights[person][weights[person].length - 1].timestamp)}
-                                                    </p>
-                                                    <p className="text-xs text-gray-500">
-                                                        Total entries: {weights[person].length}
-                                                    </p>
-                                                    {weights[person].length >= 2 && (
-                                                        <p className="text-sm font-semibold mt-1" style={{ color: colors[person] }}>
-                                                            {getWeightLoss(person) >= 0 ? '↓' : '↑'} {Math.abs(getWeightLoss(person)).toFixed(1)} lbs 
-                                                            ({getWeightLossPercentage(person) >= 0 ? '-' : '+'}{Math.abs(getWeightLossPercentage(person)).toFixed(1)}%)
-                                                        </p>
-                                                    )}
-                                                </div>
-                                                <button
-                                                    onClick={() => deleteLastWeight(person)}
-                                                    className="px-3 py-1 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
-                                                    title="Delete last entry"
-                                                >
-                                                    Delete Last
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-
-                        {hasData ? (
-                            <div className="bg-white rounded-lg shadow-md p-6">
-                                <h2 className="text-2xl font-semibold mb-4 text-gray-800">Progress Chart</h2>
-                                <ResponsiveContainer width="100%" height={400}>
-                                    <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 80 }}>
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis 
-                                            dataKey="displayTime" 
-                                            angle={-45}
-                                            textAnchor="end"
-                                            height={80}
-                                            tick={{ fontSize: 11 }}
-                                        />
-                                        <YAxis 
-                                            label={{ value: 'Weight (lbs)', angle: -90, position: 'insideLeft' }}
-                                        />
-                                        <Tooltip />
-                                        <Legend />
-                                        {people.map(person => (
-                                            <Line
-                                                key={person}
-                                                type="monotone"
-                                                dataKey={person}
-                                                stroke={colors[person]}
-                                                strokeWidth={3}
-                                                dot={{ r: 5, fill: colors[person] }}
-                                                activeDot={{ r: 7 }}
-                                                name={person}
-                                                connectNulls={false}
-                                            />
-                                        ))}
-                                        {people.map(person => (
-                                            goals[person] && (
-                                                <ReferenceLine
-                                                    key={`goal-${person}`}
-                                                    y={parseFloat(goals[person])}
-                                                    stroke={colors[person]}
-                                                    strokeDasharray="5 5"
-                                                    strokeWidth={2}
-                                                    label={{ 
-                                                        value: `${person}'s Goal (${goals[person]} lbs)`, 
-                                                        fill: colors[person], 
-                                                        fontSize: 11,
-                                                        position: 'right'
-                                                    }}
-                                                />
-                                            )
-                                        ))}
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </div>
-                        ) : (
-                            <div className="bg-white rounded-lg shadow-md p-12 text-center">
-                                <Scale className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                                <p className="text-gray-500 text-lg">Start tracking by entering your first weight above!</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
+        const people = ['Adam', 'Sean', 'Daniel', 'Mark'];
+        const colors = {
+            Adam: '#3b82f6',
+            Sean: '#ef4444',
+            Daniel: '#10b981',
+            Mark: '#f59e0b'
         };
 
-        ReactDOM.render(<WeightTracker />, document.getElementById('root'));
+        let weights = { Adam: [], Sean: [], Daniel: [], Mark: [] };
+        let goals = { Adam: null, Sean: null, Daniel: null, Mark: null };
+        let loaded = false;
+
+        // Listen to Firebase updates
+        console.log('Setting up listeners...');
+        
+        db.collection('weights').onSnapshot((snapshot) => {
+            console.log('Weights snapshot received, docs:', snapshot.size);
+            weights = { Adam: [], Sean: [], Daniel: [], Mark: [] };
+            
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                if (weights[data.person] !== undefined) {
+                    weights[data.person].push({
+                        id: doc.id,
+                        timestamp: data.timestamp,
+                        weight: data.weight
+                    });
+                }
+            });
+
+            Object.keys(weights).forEach(person => {
+                weights[person].sort((a, b) => a.timestamp - b.timestamp);
+            });
+
+            loaded = true;
+            render();
+        }, (error) => {
+            console.error('Error loading weights:', error);
+            document.getElementById('root').innerHTML = `
+                <div class="error">
+                    <h2>Error Loading Data</h2>
+                    <p>${error.message}</p>
+                </div>
+            `;
+        });
+
+        db.collection('goals').onSnapshot((snapshot) => {
+            console.log('Goals snapshot received, docs:', snapshot.size);
+            goals = { Adam: null, Sean: null, Daniel: null, Mark: null };
+            
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                goals[data.person] = data.goal;
+            });
+
+            if (loaded) render();
+        }, (error) => {
+            console.error('Error loading goals:', error);
+        });
+
+        window.addWeight = async function(person) {
+            const input = document.getElementById(`weight-${person}`);
+            const weight = parseFloat(input.value);
+            
+            if (isNaN(weight) || weight <= 0) {
+                alert('Please enter a valid weight');
+                return;
+            }
+
+            try {
+                await db.collection('weights').add({
+                    person: person,
+                    weight: weight,
+                    timestamp: Date.now()
+                });
+                input.value = '';
+            } catch (error) {
+                console.error('Error adding weight:', error);
+                alert('Error saving weight: ' + error.message);
+            }
+        }
+
+        window.setGoal = async function(person) {
+            const input = document.getElementById(`goal-${person}`);
+            const goal = parseFloat(input.value);
+            
+            if (isNaN(goal) || goal <= 0) {
+                alert('Please enter a valid goal');
+                return;
+            }
+
+            try {
+                const goalQuery = await db.collection('goals')
+                    .where('person', '==', person)
+                    .get();
+
+                if (goalQuery.empty) {
+                    await db.collection('goals').add({
+                        person: person,
+                        goal: goal
+                    });
+                } else {
+                    await db.collection('goals').doc(goalQuery.docs[0].id).update({
+                        goal: goal
+                    });
+                }
+                input.value = '';
+            } catch (error) {
+                console.error('Error setting goal:', error);
+                alert('Error saving goal: ' + error.message);
+            }
+        }
+
+        window.deleteLastWeight = async function(person) {
+            if (weights[person].length === 0) return;
+            
+            const lastEntry = weights[person][weights[person].length - 1];
+            
+            if (!confirm(`Delete last weight entry (${lastEntry.weight} lbs)?`)) {
+                return;
+            }
+            
+            try {
+                await db.collection('weights').doc(lastEntry.id).delete();
+            } catch (error) {
+                console.error('Error deleting weight:', error);
+                alert('Error deleting weight: ' + error.message);
+            }
+        }
+
+        function getWeightLoss(person) {
+            if (weights[person].length < 2) return 0;
+            return weights[person][0].weight - weights[person][weights[person].length - 1].weight;
+        }
+
+        function getWeightLossPercentage(person) {
+            if (weights[person].length < 2) return 0;
+            const loss = getWeightLoss(person);
+            return (loss / weights[person][0].weight) * 100;
+        }
+
+        function getTotalWeightLoss() {
+            return people.reduce((total, person) => total + getWeightLoss(person), 0);
+        }
+
+        function getDaysUntilCruise() {
+            const cruiseDate = new Date('2026-02-27');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            cruiseDate.setHours(0, 0, 0, 0);
+            return Math.ceil((cruiseDate - today) / (1000 * 60 * 60 * 24));
+        }
+
+        function getLeaderByPounds() {
+            let leader = null;
+            let maxLoss = 0;
+            
+            people.forEach(person => {
+                const loss = getWeightLoss(person);
+                if (loss > maxLoss) {
+                    maxLoss = loss;
+                    leader = person;
+                }
+            });
+            
+            return leader ? { name: leader, loss: maxLoss } : null;
+        }
+
+        function getLeaderByPercentage() {
+            let leader = null;
+            let maxPercentage = 0;
+            
+            people.forEach(person => {
+                const percentage = getWeightLossPercentage(person);
+                if (percentage > maxPercentage) {
+                    maxPercentage = percentage;
+                    leader = person;
+                }
+            });
+            
+            return leader ? { name: leader, percentage: maxPercentage } : null;
+        }
+
+        function formatLastEntry(timestamp) {
+            const date = new Date(timestamp);
+            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const today = new Date().toLocaleDateString();
+            
+            if (date.toLocaleDateString() === today) {
+                return `Today at ${timeStr}`;
+            }
+            return `${date.toLocaleDateString()} at ${timeStr}`;
+        }
+
+        function render() {
+            console.log('Rendering...');
+            const hasData = people.some(p => weights[p].length > 0);
+            const poundsLeader = getLeaderByPounds();
+            const pctLeader = getLeaderByPercentage();
+
+            document.getElementById('root').innerHTML = `
+                <div class="container">
+                    <div class="header">
+                        <h1>⚖️ Cherokee Chooters Shred ⚖️</h1>
+                        <p class="subtitle">New Year, New You! Track your progress together 💪</p>
+                    </div>
+
+                    <div class="stats">
+                        <div class="stat-card cruise">
+                            <div class="stat-label">Days Until Cruise 🚢</div>
+                            <div class="stat-value">${getDaysUntilCruise()}</div>
+                        </div>
+                        
+                        ${hasData ? `
+                            <div class="stat-card total">
+                                <div class="stat-label">Total Weight Lost Together</div>
+                                <div class="stat-value">${getTotalWeightLoss().toFixed(1)} lbs</div>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    ${hasData && poundsLeader ? `
+                        <div class="stats">
+                            <div class="stat-card leader">
+                                <div class="stat-label">🏆 Pounds Leader</div>
+                                <div class="stat-value">${poundsLeader.name}</div>
+                                <div class="stat-subtext">${poundsLeader.loss.toFixed(1)} lbs lost</div>
+                            </div>
+                            
+                            <div class="stat-card leader-pct">
+                                <div class="stat-label">🏆 Percentage Leader</div>
+                                <div class="stat-value">${pctLeader.name}</div>
+                                <div class="stat-subtext">${pctLeader.percentage.toFixed(1)}% lost</div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <div class="grid">
+                        ${people.map(person => `
+                            <div class="person-card">
+                                <h3 class="person-name" style="color: ${colors[person]}">${person}</h3>
+                                
+                                <div class="input-group">
+                                    <label>Today's Weight (lbs)</label>
+                                    <div class="input-row">
+                                        <input 
+                                            type="number" 
+                                            step="0.1" 
+                                            id="weight-${person}"
+                                            placeholder="Enter weight"
+                                            onkeypress="if(event.key==='Enter') addWeight('${person}')"
+                                        />
+                                        <button class="btn-add" onclick="addWeight('${person}')">Add</button>
+                                    </div>
+                                </div>
+
+                                <div class="input-group">
+                                    <label>🎯 Goal Weight (lbs)</label>
+                                    <div class="input-row">
+                                        <input 
+                                            type="number" 
+                                            step="0.1" 
+                                            id="goal-${person}"
+                                            placeholder="${goals[person] ? `Current: ${goals[person]}` : 'Set goal'}"
+                                            onkeypress="if(event.key==='Enter') setGoal('${person}')"
+                                        />
+                                        <button class="btn-goal" onclick="setGoal('${person}')">Set</button>
+                                    </div>
+                                    ${goals[person] ? `<p class="stat-text">Goal: ${goals[person]} lbs</p>` : ''}
+                                </div>
+
+                                ${weights[person].length > 0 ? `
+                                    <div class="person-stats">
+                                        <div class="stat-row">
+                                            <div>
+                                                <p class="stat-text">Latest: ${weights[person][weights[person].length - 1].weight} lbs</p>
+                                                <p class="stat-text">${formatLastEntry(weights[person][weights[person].length - 1].timestamp)}</p>
+                                                <p class="stat-text">Total entries: ${weights[person].length}</p>
+                                                ${weights[person].length >= 2 ? `
+                                                    <p class="progress" style="color: ${colors[person]}">
+                                                        ${getWeightLoss(person) >= 0 ? '↓' : '↑'} 
+                                                        ${Math.abs(getWeightLoss(person)).toFixed(1)} lbs
+                                                        (${getWeightLossPercentage(person) >= 0 ? '-' : '+'}${Math.abs(getWeightLossPercentage(person)).toFixed(1)}%)
+                                                    </p>
+                                                ` : ''}
+                                            </div>
+                                            <button class="btn-delete" onclick="deleteLastWeight('${person}')">Delete Last</button>
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        console.log('Setup complete!');
+        }
     </script>
 </body>
 </html>
