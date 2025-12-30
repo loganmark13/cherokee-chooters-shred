@@ -1,0 +1,1382 @@
+        const inspirationalQuotes = [
+            "The only bad workout is the one that didn't happen.",
+            "Your body can stand almost anything. It's your mind you have to convince.",
+            "Success is the sum of small efforts repeated day in and day out.",
+            "The difference between try and triumph is a little umph.",
+            "Don't wish for it, work for it.",
+            "Strive for progress, not perfection.",
+            "The body achieves what the mind believes.",
+            "You don't have to be extreme, just consistent.",
+            "Every journey begins with a single step.",
+            "Champions keep playing until they get it right.",
+            "The pain you feel today will be the strength you feel tomorrow.",
+            "Believe in yourself and all that you are.",
+            "Push yourself because no one else is going to do it for you.",
+            "Great things never come from comfort zones.",
+            "Wake up with determination. Go to bed with satisfaction.",
+            "Your only limit is you.",
+            "It's going to be hard, but hard does not mean impossible.",
+            "Fall in love with taking care of yourself.",
+            "Small progress is still progress.",
+            "You are stronger than you think.",
+            "Make yourself proud.",
+            "The only person you should try to be better than is the person you were yesterday.",
+            "Don't stop when you're tired. Stop when you're done.",
+            "You're one workout away from a good mood.",
+            "Take care of your body. It's the only place you have to live.",
+            "The secret of getting ahead is getting started.",
+            "Motivation is what gets you started. Habit is what keeps you going.",
+            "Be stronger than your excuses.",
+            "Success starts with self-discipline.",
+            "Doubt kills more dreams than failure ever will.",
+            "The harder you work for something, the greater you'll feel when you achieve it.",
+            "Dream bigger. Do bigger.",
+            "Don't wait for opportunity. Create it.",
+            "Sometimes later becomes never. Do it now.",
+            "Sweat is magic. Cover yourself in it daily to grant your wishes.",
+            "If it doesn't challenge you, it won't change you.",
+            "Making excuses burns zero calories per hour.",
+            "You miss 100% of the shots you don't take.",
+            "A one hour workout is only 4% of your day.",
+            "The only way to finish is to start.",
+            "Transformation is not a future event. It's a present activity.",
+            "Your health is an investment, not an expense.",
+            "Fitness is not about being better than someone else. It's about being better than you used to be.",
+            "The groundwork for all happiness is good health.",
+            "Take care of yourself. You deserve it.",
+            "Progress, not perfection.",
+            "Every accomplishment starts with the decision to try.",
+            "The best project you'll ever work on is you.",
+            "Good things come to those who sweat.",
+            "Train like a beast, look like a beauty.",
+            "Excuses don't burn calories.",
+            "Your body hears everything your mind says. Stay positive.",
+            "Eat clean, train dirty.",
+            "Strong is the new skinny.",
+            "Wake up. Work out. Look hot. Kick ass.",
+            "The only bad decision is not making one.",
+            "Sore today, strong tomorrow.",
+            "No pain, no gain. Shut up and train.",
+            "When you feel like quitting, think about why you started.",
+            "Discipline is doing what needs to be done, even when you don't want to do it.",
+            "The difference between who you are and who you want to be is what you do.",
+            "It's a slow process, but quitting won't speed it up.",
+            "You don't get what you wish for. You get what you work for.",
+            "Results happen over time, not overnight. Work hard, stay consistent, and be patient.",
+            "Your future self will thank you.",
+            "Commit to be fit.",
+            "Fitness is like a relationship. You can't cheat and expect it to work.",
+            "Train insane or remain the same.",
+            "The pain of discipline weighs ounces. The pain of regret weighs tons.",
+            "Whether you think you can or think you can't, you're right."
+        ];<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cherokee Chooters Shred - Weight Tracker</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(to bottom right, #eff6ff, #e0e7ff);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: #6b7280;
+            font-size: 1.1rem;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 2rem 0;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            min-width: 200px;
+        }
+        
+        .stat-card.cruise {
+            background: linear-gradient(to right, #06b6d4, #2563eb);
+            color: white;
+        }
+        
+        .stat-card.total {
+            background: linear-gradient(to right, #6366f1, #a855f7);
+            color: white;
+        }
+        
+        .stat-card.leader {
+            background: linear-gradient(to right, #fbbf24, #f97316);
+            color: white;
+        }
+        
+        .stat-card.leader-pct {
+            background: linear-gradient(to right, #4ade80, #10b981);
+            color: white;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        
+        .stat-subtext {
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .person-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .person-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        
+        .input-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        input {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-add {
+            background: #6366f1;
+            color: white;
+        }
+        
+        .btn-add:hover {
+            background: #4f46e5;
+        }
+        
+        .btn-goal {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-goal:hover {
+            background: #059669;
+        }
+        
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+            font-size: 0.875rem;
+            padding: 0.25rem 0.75rem;
+        }
+        
+        .btn-delete:hover {
+            background: #dc2626;
+        }
+        
+        .person-stats {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .stat-text {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .progress {
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 4rem;
+            font-size: 1.5rem;
+            color: #6b7280;
+        }
+        
+        .error {
+            text-align: center;
+            padding: 2rem;
+            color: #ef4444;
+            background: #fee;
+            border-radius: 0.5rem;
+            margin: 2rem;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .chart-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+        
+        .table-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+        
+        .table-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .btn-download {
+            background: #10b981;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+        
+        .btn-download:hover {
+            background: #059669;
+        }
+        
+        .goal-celebration {
+            display: inline-block;
+            margin-left: 0.5rem;
+            font-size: 1.5rem;
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: #f3f4f6;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        tr:hover {
+            background: #f9fafb;
+        }
+        
+        .name-cell {
+            font-weight: 600;
+        }
+        
+        .message-board {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 2rem;
+        }
+        
+        .message-board-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        
+        .message-input-area {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .message-select {
+            padding: 0.5rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            background: white;
+        }
+        
+        .message-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.5rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+        }
+        
+        .btn-post {
+            background: #6366f1;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-post:hover {
+            background: #4f46e5;
+        }
+        
+        .messages-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .retroactive-entry {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 2rem;
+        }
+        
+        .retroactive-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        
+        .retroactive-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-input {
+            padding: 0.5rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+        }
+        
+        .btn-add-retroactive {
+            background: #8b5cf6;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            height: fit-content;
+        }
+        
+        .btn-add-retroactive:hover {
+            background: #7c3aed;
+        }
+        
+        .message-item {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            transition: background 0.2s;
+        }
+        
+        .message-item:hover {
+            background: #f9fafb;
+        }
+        
+        .message-item:last-child {
+            border-bottom: none;
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .message-author {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .message-time {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+        
+        .message-text {
+            color: #374151;
+            line-height: 1.5;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .stats {
+                flex-direction: column;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-wrapper {
+                height: 300px;
+            }
+            
+            .chart-title {
+                font-size: 1.25rem;
+            }
+            
+            .chart-container {
+                padding: 1rem;
+            }
+            
+            th, td {
+                padding: 0.5rem;
+                font-size: 0.875rem;
+            }
+            
+            .table-title {
+                font-size: 1.25rem;
+            }
+            
+            .message-board-title {
+                font-size: 1.25rem;
+            }
+            
+            .message-input-area {
+                flex-direction: column;
+            }
+            
+            .message-select, .message-input {
+                width: 100%;
+            }
+            
+            .retroactive-title {
+                font-size: 1.25rem;
+            }
+            
+            .retroactive-form {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <div class="loading">Loading Firebase...</div>
+    </div>
+
+    <!-- Firebase v8 -->
+    <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+
+    <script defer>
+        // Wait for Firebase scripts to load
+        function checkFirebase() {
+            if (typeof firebase !== 'undefined') {
+                console.log('Firebase loaded!');
+                initApp();
+            } else {
+                console.log('Waiting for Firebase...');
+                setTimeout(checkFirebase, 100);
+            }
+        }
+
+        // Start checking after DOM loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', checkFirebase);
+        } else {
+            checkFirebase();
+        }
+
+        function initApp() {
+
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBpcOAWrr8hV2LQ2_mIUfIgvs05y2AYTRY",
+            authDomain: "cherokee-chooters-shred.firebaseapp.com",
+            projectId: "cherokee-chooters-shred",
+            storageBucket: "cherokee-chooters-shred.firebasestorage.app",
+            messagingSenderId: "448611335080",
+            appId: "1:448611335080:web:eb9eb0688d9b846e0cbb9d"
+        };
+
+        console.log('Initializing Firebase...');
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        console.log('Firebase initialized!');
+
+        const people = ['Adam', 'Sean', 'Daniel', 'Mark'];
+        const colors = {
+            Adam: '#3b82f6',
+            Sean: '#ef4444',
+            Daniel: '#10b981',
+            Mark: '#f59e0b'
+        };
+
+        const inspirationalQuotes = [
+            "The only bad workout is the one that didn't happen.",
+            "Your body can stand almost anything. It's your mind you have to convince.",
+            "Success is the sum of small efforts repeated day in and day out.",
+            "The difference between try and triumph is a little umph.",
+            "Don't wish for it, work for it.",
+            "Strive for progress, not perfection.",
+            "The body achieves what the mind believes.",
+            "You don't have to be extreme, just consistent.",
+            "Every journey begins with a single step.",
+            "Champions keep playing until they get it right.",
+            "The pain you feel today will be the strength you feel tomorrow.",
+            "Believe in yourself and all that you are.",
+            "Push yourself because no one else is going to do it for you.",
+            "Great things never come from comfort zones.",
+            "Wake up with determination. Go to bed with satisfaction.",
+            "Your only limit is you.",
+            "It's going to be hard, but hard does not mean impossible.",
+            "Fall in love with taking care of yourself.",
+            "Small progress is still progress.",
+            "You are stronger than you think."
+        ];
+
+        let weights = { Adam: [], Sean: [], Daniel: [], Mark: [] };
+        let goals = { Adam: null, Sean: null, Daniel: null, Mark: null };
+        let loaded = false;
+        let chart = null;
+        let messages = [];
+
+        // Listen to Firebase updates
+        console.log('Setting up listeners...');
+        
+        db.collection('weights').onSnapshot((snapshot) => {
+            console.log('Weights snapshot received, docs:', snapshot.size);
+            weights = { Adam: [], Sean: [], Daniel: [], Mark: [] };
+            
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                if (weights[data.person] !== undefined) {
+                    weights[data.person].push({
+                        id: doc.id,
+                        timestamp: data.timestamp,
+                        weight: data.weight
+                    });
+                }
+            });
+
+            Object.keys(weights).forEach(person => {
+                weights[person].sort((a, b) => a.timestamp - b.timestamp);
+            });
+
+            loaded = true;
+            render();
+        }, (error) => {
+            console.error('Error loading weights:', error);
+            document.getElementById('root').innerHTML = `
+                <div class="error">
+                    <h2>Error Loading Data</h2>
+                    <p>${error.message}</p>
+                </div>
+            `;
+        });
+
+        db.collection('goals').onSnapshot((snapshot) => {
+            console.log('Goals snapshot received, docs:', snapshot.size);
+            goals = { Adam: null, Sean: null, Daniel: null, Mark: null };
+            
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                goals[data.person] = data.goal;
+            });
+
+            if (loaded) render();
+        }, (error) => {
+            console.error('Error loading goals:', error);
+        });
+
+        db.collection('messages').orderBy('timestamp', 'desc').limit(20).onSnapshot((snapshot) => {
+            console.log('Messages snapshot received, docs:', snapshot.size);
+            messages = [];
+            
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                messages.push({
+                    id: doc.id,
+                    person: data.person,
+                    message: data.message,
+                    timestamp: data.timestamp
+                });
+            });
+
+            if (loaded) render();
+        }, (error) => {
+            console.error('Error loading messages:', error);
+        });
+
+        window.addWeight = async function(person) {
+            const input = document.getElementById(`weight-${person}`);
+            const weight = parseFloat(input.value);
+            
+            if (isNaN(weight) || weight <= 0) {
+                alert('Please enter a valid weight');
+                return;
+            }
+
+            try {
+                await db.collection('weights').add({
+                    person: person,
+                    weight: weight,
+                    timestamp: Date.now()
+                });
+                input.value = '';
+            } catch (error) {
+                console.error('Error adding weight:', error);
+                alert('Error saving weight: ' + error.message);
+            }
+        }
+
+        window.setGoal = async function(person) {
+            const input = document.getElementById(`goal-${person}`);
+            const goal = parseFloat(input.value);
+            
+            if (isNaN(goal) || goal <= 0) {
+                alert('Please enter a valid goal');
+                return;
+            }
+
+            try {
+                const goalQuery = await db.collection('goals')
+                    .where('person', '==', person)
+                    .get();
+
+                if (goalQuery.empty) {
+                    await db.collection('goals').add({
+                        person: person,
+                        goal: goal
+                    });
+                } else {
+                    await db.collection('goals').doc(goalQuery.docs[0].id).update({
+                        goal: goal
+                    });
+                }
+                input.value = '';
+            } catch (error) {
+                console.error('Error setting goal:', error);
+                alert('Error saving goal: ' + error.message);
+            }
+        }
+
+        window.deleteLastWeight = async function(person) {
+            if (weights[person].length === 0) return;
+            
+            const lastEntry = weights[person][weights[person].length - 1];
+            
+            if (!confirm(`Delete last weight entry (${lastEntry.weight} lbs)?`)) {
+                return;
+            }
+            
+            try {
+                await db.collection('weights').doc(lastEntry.id).delete();
+            } catch (error) {
+                console.error('Error deleting weight:', error);
+                alert('Error deleting weight: ' + error.message);
+            }
+        }
+
+        function getWeightLoss(person) {
+            if (weights[person].length < 2) return 0;
+            return weights[person][0].weight - weights[person][weights[person].length - 1].weight;
+        }
+
+        function getWeightLossPercentage(person) {
+            if (weights[person].length < 2) return 0;
+            const loss = getWeightLoss(person);
+            return (loss / weights[person][0].weight) * 100;
+        }
+
+        function getTotalWeightLoss() {
+            return people.reduce((total, person) => total + getWeightLoss(person), 0);
+        }
+
+        function getDaysUntilCruise() {
+            const cruiseDate = new Date('2026-02-27');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            cruiseDate.setHours(0, 0, 0, 0);
+            return Math.ceil((cruiseDate - today) / (1000 * 60 * 60 * 24));
+        }
+
+        function getLeaderByPounds() {
+            let leader = null;
+            let maxLoss = 0;
+            
+            people.forEach(person => {
+                const loss = getWeightLoss(person);
+                if (loss > maxLoss) {
+                    maxLoss = loss;
+                    leader = person;
+                }
+            });
+            
+            return leader ? { name: leader, loss: maxLoss } : null;
+        }
+
+        function getLeaderByPercentage() {
+            let leader = null;
+            let maxPercentage = 0;
+            
+            people.forEach(person => {
+                const percentage = getWeightLossPercentage(person);
+                if (percentage > maxPercentage) {
+                    maxPercentage = percentage;
+                    leader = person;
+                }
+            });
+            
+            return leader ? { name: leader, percentage: maxPercentage } : null;
+        }
+
+        function formatLastEntry(timestamp) {
+            const date = new Date(timestamp);
+            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const today = new Date().toLocaleDateString();
+            
+            if (date.toLocaleDateString() === today) {
+                return `Today at ${timeStr}`;
+            }
+            return `${date.toLocaleDateString()} at ${timeStr}`;
+        }
+
+        function getAllEntries() {
+            const allEntries = [];
+            people.forEach(person => {
+                weights[person].forEach(entry => {
+                    allEntries.push({
+                        person: person,
+                        weight: entry.weight,
+                        timestamp: entry.timestamp
+                    });
+                });
+            });
+            // Sort by timestamp, newest first
+            allEntries.sort((a, b) => b.timestamp - a.timestamp);
+            return allEntries;
+        }
+
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            const dateStr = date.toLocaleDateString();
+            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return `${dateStr} ${timeStr}`;
+        }
+
+        function hasMetGoal(person) {
+            if (!goals[person] || weights[person].length === 0) return false;
+            const currentWeight = weights[person][weights[person].length - 1].weight;
+            return currentWeight <= goals[person];
+        }
+
+        function downloadCSV() {
+            const entries = getAllEntries();
+            
+            // Create CSV header
+            let csv = 'Name,Weight (lbs),Timestamp\n';
+            
+            // Add data rows
+            entries.forEach(entry => {
+                csv += `${entry.person},${entry.weight},${formatTimestamp(entry.timestamp)}\n`;
+            });
+            
+            // Create download link
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cherokee-chooters-weight-history-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        window.downloadCSV = downloadCSV;
+
+        function getDailyQuote() {
+            const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+            return inspirationalQuotes[dayOfYear % inspirationalQuotes.length];
+        }
+
+        window.postMessage = async function() {
+            const personSelect = document.getElementById('messagePerson');
+            const messageInput = document.getElementById('messageInput');
+            
+            const person = personSelect.value;
+            const message = messageInput.value.trim();
+            
+            if (!message) {
+                alert('Please enter a message');
+                return;
+            }
+
+            try {
+                await db.collection('messages').add({
+                    person: person,
+                    message: message,
+                    timestamp: Date.now()
+                });
+                messageInput.value = '';
+            } catch (error) {
+                console.error('Error posting message:', error);
+                alert('Error posting message: ' + error.message);
+            }
+        }
+
+        function formatMessageTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            return date.toLocaleDateString();
+        }
+
+        function updateChart() {
+            const hasData = people.some(p => weights[p].length > 0);
+            if (!hasData) return;
+
+            // Collect all unique timestamps and sort them
+            const allTimestamps = new Set();
+            people.forEach(person => {
+                weights[person].forEach(entry => {
+                    allTimestamps.add(entry.timestamp);
+                });
+            });
+            
+            const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
+            
+            // Create labels from timestamps
+            const labels = sortedTimestamps.map(ts => {
+                const date = new Date(ts);
+                const month = date.getMonth() + 1;
+                const day = date.getDate();
+                const hours = date.getHours();
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                return `${month}/${day} ${hours}:${minutes}`;
+            });
+
+            // Build datasets for each person
+            const datasets = people.map(person => {
+                const data = [];
+                let lastWeight = null;
+
+                sortedTimestamps.forEach(timestamp => {
+                    const entry = weights[person].find(w => w.timestamp === timestamp);
+                    if (entry) {
+                        lastWeight = entry.weight;
+                    }
+                    data.push(lastWeight);
+                });
+
+                return {
+                    label: person,
+                    data: data,
+                    borderColor: colors[person],
+                    backgroundColor: colors[person] + '33',
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    tension: 0.1,
+                    spanGaps: false
+                };
+            }).filter(dataset => dataset.data.some(d => d !== null));
+
+            // Add goal lines
+            people.forEach(person => {
+                if (goals[person] && weights[person].length > 0) {
+                    const goalData = new Array(sortedTimestamps.length).fill(goals[person]);
+                    
+                    datasets.push({
+                        label: `${person}'s Goal`,
+                        data: goalData,
+                        borderColor: colors[person],
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        tension: 0,
+                        hidden: true // Hide from legend but still show on chart
+                    });
+                }
+            });
+
+            // Destroy old chart if exists
+            if (chart) {
+                chart.destroy();
+            }
+
+            // Create new chart
+            const ctx = document.getElementById('weightChart');
+            if (!ctx) return;
+
+            const isMobile = window.innerWidth < 768;
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: !isMobile,
+                                text: 'Date & Time',
+                                font: {
+                                    size: isMobile ? 10 : 12
+                                }
+                            },
+                            ticks: {
+                                maxRotation: isMobile ? 45 : 45,
+                                minRotation: isMobile ? 45 : 45,
+                                font: {
+                                    size: isMobile ? 9 : 10
+                                },
+                                autoSkip: true,
+                                maxTicksLimit: isMobile ? 6 : 10
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: isMobile ? 'lbs' : 'Weight (lbs)',
+                                font: {
+                                    size: isMobile ? 10 : 12
+                                }
+                            },
+                            ticks: {
+                                font: {
+                                    size: isMobile ? 10 : 11
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                padding: isMobile ? 10 : 20,
+                                font: {
+                                    size: isMobile ? 11 : 12
+                                },
+                                usePointStyle: true,
+                                boxWidth: isMobile ? 6 : 8,
+                                filter: function(legendItem) {
+                                    // Hide goal lines from legend
+                                    return !legendItem.text.includes('Goal');
+                                }
+                            }
+                        },
+                        tooltip: {
+                            enabled: true,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: isMobile ? 8 : 12,
+                            bodyFont: {
+                                size: isMobile ? 11 : 13
+                            },
+                            titleFont: {
+                                size: isMobile ? 12 : 14
+                            },
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.parsed.y === null) return null;
+                                    return `${context.dataset.label}: ${context.parsed.y.toFixed(1)} lbs`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function render() {
+            console.log('Rendering...');
+            const hasData = people.some(p => weights[p].length > 0);
+            const poundsLeader = getLeaderByPounds();
+            const pctLeader = getLeaderByPercentage();
+
+            document.getElementById('root').innerHTML = `
+                <div class="container">
+                    <div class="header">
+                        <h1>⚖️ Cherokee Chooters Shred ⚖️</h1>
+                        <p class="subtitle">${getDailyQuote()}</p>
+                    </div>
+
+                    <div class="stats">
+                        <div class="stat-card cruise">
+                            <div class="stat-label">Days Until Cruise 🚢</div>
+                            <div class="stat-value">${getDaysUntilCruise()}</div>
+                        </div>
+                        
+                        ${hasData ? `
+                            <div class="stat-card total">
+                                <div class="stat-label">Total Weight Lost Together</div>
+                                <div class="stat-value">${getTotalWeightLoss().toFixed(1)} lbs</div>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    ${hasData && poundsLeader ? `
+                        <div class="stats">
+                            <div class="stat-card leader">
+                                <div class="stat-label">🏆 Pounds Leader</div>
+                                <div class="stat-value">${poundsLeader.name}</div>
+                                <div class="stat-subtext">${poundsLeader.loss.toFixed(1)} lbs lost</div>
+                            </div>
+                            
+                            <div class="stat-card leader-pct">
+                                <div class="stat-label">🏆 Percentage Leader</div>
+                                <div class="stat-value">${pctLeader.name}</div>
+                                <div class="stat-subtext">${pctLeader.percentage.toFixed(1)}% lost</div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    ${hasData ? `
+                        <div class="chart-container">
+                            <h2 class="chart-title">Progress Chart</h2>
+                            <div class="chart-wrapper">
+                                <canvas id="weightChart"></canvas>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <div class="grid">
+                        ${people.map(person => `
+                            <div class="person-card">
+                                <h3 class="person-name" style="color: ${colors[person]}">${person}</h3>
+                                
+                                <div class="input-group">
+                                    <label>Today's Weight (lbs)</label>
+                                    <div class="input-row">
+                                        <input 
+                                            type="number" 
+                                            step="0.1" 
+                                            id="weight-${person}"
+                                            placeholder="Enter weight"
+                                            onkeypress="if(event.key==='Enter') addWeight('${person}')"
+                                        />
+                                        <button class="btn-add" onclick="addWeight('${person}')">Add</button>
+                                    </div>
+                                </div>
+
+                                <div class="input-group">
+                                    <label>🎯 Goal Weight (lbs)</label>
+                                    <div class="input-row">
+                                        <input 
+                                            type="number" 
+                                            step="0.1" 
+                                            id="goal-${person}"
+                                            placeholder="${goals[person] ? `Current: ${goals[person]}` : 'Set goal'}"
+                                            onkeypress="if(event.key==='Enter') setGoal('${person}')"
+                                        />
+                                        <button class="btn-goal" onclick="setGoal('${person}')">Set</button>
+                                    </div>
+                                    ${goals[person] ? `<p class="stat-text">Goal: ${goals[person]} lbs</p>` : ''}
+                                </div>
+
+                                ${weights[person].length > 0 ? `
+                                    <div class="person-stats">
+                                        <div class="stat-row">
+                                            <div>
+                                                <p class="stat-text">Latest: ${weights[person][weights[person].length - 1].weight} lbs</p>
+                                                <p class="stat-text">${formatLastEntry(weights[person][weights[person].length - 1].timestamp)}</p>
+                                                <p class="stat-text">Total entries: ${weights[person].length}</p>
+                                                ${weights[person].length >= 2 ? `
+                                                    <p class="progress" style="color: ${colors[person]}">
+                                                        ${getWeightLoss(person) >= 0 ? '↓' : '↑'} 
+                                                        ${Math.abs(getWeightLoss(person)).toFixed(1)} lbs
+                                                        (${getWeightLossPercentage(person) >= 0 ? '-' : '+'}${Math.abs(getWeightLossPercentage(person)).toFixed(1)}%)
+                                                    </p>
+                                                ` : ''}
+                                            </div>
+                                            <button class="btn-delete" onclick="deleteLastWeight('${person}')">Delete Last</button>
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    ${hasData ? `
+                        <div class="table-container">
+                            <div class="table-title">
+                                <span>Weight Entry History</span>
+                                <button class="btn-download" onclick="downloadCSV()">📥 Download CSV</button>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Weight</th>
+                                        <th>Timestamp</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${getAllEntries().map(entry => `
+                                        <tr>
+                                            <td class="name-cell" style="color: ${colors[entry.person]}">${entry.person}</td>
+                                            <td>${entry.weight} lbs</td>
+                                            <td>${formatTimestamp(entry.timestamp)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    ` : ''}
+
+                    <div class="message-board">
+                        <h2 class="message-board-title">Message Board 💬</h2>
+                        
+                        <div class="message-input-area">
+                            <select id="messagePerson" class="message-select">
+                                ${people.map(person => `<option value="${person}">${person}</option>`).join('')}
+                            </select>
+                            <input 
+                                type="text" 
+                                id="messageInput" 
+                                class="message-input"
+                                placeholder="Leave a message for the team..."
+                                maxlength="200"
+                                onkeypress="if(event.key==='Enter') postMessage()"
+                            />
+                            <button class="btn-post" onclick="postMessage()">Post</button>
+                        </div>
+
+                        <div class="messages-list">
+                            ${messages.length > 0 ? messages.map(msg => `
+                                <div class="message-item">
+                                    <div class="message-header">
+                                        <span class="message-author" style="color: ${colors[msg.person]}">${msg.person}</span>
+                                        <span class="message-time">${formatMessageTime(msg.timestamp)}</span>
+                                    </div>
+                                    <div class="message-text">${msg.message}</div>
+                                </div>
+                            `).join('') : '<p class="stat-text" style="text-align: center; padding: 2rem;">No messages yet. Be the first to post! 🎉</p>'}
+                        </div>
+                    </div>
+
+                    <div class="retroactive-entry">
+                        <h2 class="retroactive-title">Add Past Weight Entry 📝</h2>
+                        <p class="stat-text" style="margin-bottom: 1rem;">Missed logging a weight? Add it here with the correct date and time.</p>
+                        
+                        <div class="retroactive-form">
+                            <div class="form-group">
+                                <label class="form-label">Name</label>
+                                <select id="retroPerson" class="form-input">
+                                    ${people.map(person => `<option value="${person}">${person}</option>`).join('')}
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Weight (lbs)</label>
+                                <input 
+                                    type="number" 
+                                    step="0.1" 
+                                    id="retroWeight" 
+                                    class="form-input"
+                                    placeholder="Enter weight"
+                                />
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Date</label>
+                                <input 
+                                    type="date" 
+                                    id="retroDate" 
+                                    class="form-input"
+                                />
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Time</label>
+                                <input 
+                                    type="time" 
+                                    id="retroTime" 
+                                    class="form-input"
+                                />
+                            </div>
+                            
+                            <div class="form-group">
+                                <button class="btn-add-retroactive" onclick="addRetroactiveWeight()">Add Entry</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Update chart after render
+            if (hasData) {
+                setTimeout(updateChart, 100);
+            }
+        }
+
+        console.log('Setup complete!');
+        }
+    </script>
+</body>
+</html>
