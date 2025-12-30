@@ -519,6 +519,131 @@
             }
         }
         
+        /* Progress Bar Styles */
+        .progress-container {
+            margin-top: 0.75rem;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-bottom: 0.25rem;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        /* Streak Styles */
+        .streak-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: #fef3c7;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+        
+        .streak-display.hot {
+            background: linear-gradient(to right, #fef3c7, #fde68a);
+        }
+        
+        .streak-fire {
+            font-size: 1.25rem;
+        }
+        
+        /* Badge Styles */
+        .badges-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .badge-first-entry {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        
+        .badge-5lbs {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .badge-10lbs {
+            background: #d1fae5;
+            color: #059669;
+        }
+        
+        .badge-15lbs {
+            background: #a7f3d0;
+            color: #047857;
+        }
+        
+        .badge-20lbs {
+            background: #6ee7b7;
+            color: #065f46;
+        }
+        
+        .badge-streak-7 {
+            background: #fef3c7;
+            color: #b45309;
+        }
+        
+        .badge-streak-14 {
+            background: #fde68a;
+            color: #a16207;
+        }
+        
+        .badge-streak-30 {
+            background: #fcd34d;
+            color: #92400e;
+        }
+        
+        .badge-halfway {
+            background: #e9d5ff;
+            color: #7e22ce;
+        }
+        
+        .badge-goal {
+            background: linear-gradient(to right, #fcd34d, #f59e0b);
+            color: #78350f;
+        }
+        
+        .badge-5pct {
+            background: #cffafe;
+            color: #0e7490;
+        }
+        
+        .badge-10pct {
+            background: #a5f3fc;
+            color: #0891b2;
+        }
+        
         .recipe-container {
             background: white;
             padding: 1.5rem;
@@ -721,6 +846,15 @@
             
             .recipe-section-title {
                 font-size: 1rem;
+            }
+            
+            .badges-container {
+                gap: 0.375rem;
+            }
+            
+            .badge {
+                font-size: 0.65rem;
+                padding: 0.2rem 0.4rem;
             }
         }
     </style>
@@ -1191,13 +1325,8 @@
             function formatLastEntry(timestamp) {
                 const date = new Date(timestamp);
                 const today = new Date();
-                const yesterday = new Date(today);
-                yesterday.setDate(yesterday.getDate() - 1);
-
                 const dateStr = date.toLocaleDateString();
                 const todayStr = today.toLocaleDateString();
-                const yesterdayStr = yesterday.toLocaleDateString();
-
                 const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
                 if (dateStr === todayStr) {
@@ -1234,11 +1363,108 @@
                 return currentWeight <= goals[person];
             }
 
+            // NEW: Calculate streak (consecutive days with weigh-ins)
+            function getStreak(person) {
+                if (weights[person].length === 0) return 0;
+                
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                // Get unique days with entries (sorted newest first)
+                const entryDays = [];
+                weights[person].forEach(entry => {
+                    const entryDate = new Date(entry.timestamp);
+                    entryDate.setHours(0, 0, 0, 0);
+                    const dateStr = entryDate.toISOString().split('T')[0];
+                    if (!entryDays.includes(dateStr)) {
+                        entryDays.push(dateStr);
+                    }
+                });
+                entryDays.sort().reverse();
+                
+                // Check if most recent entry is today or yesterday
+                const mostRecentDate = new Date(entryDays[0]);
+                const diffDays = Math.floor((today - mostRecentDate) / (1000 * 60 * 60 * 24));
+                
+                if (diffDays > 1) return 0; // Streak broken
+                
+                let streak = 1;
+                for (let i = 1; i < entryDays.length; i++) {
+                    const prevDate = new Date(entryDays[i - 1]);
+                    const currDate = new Date(entryDays[i]);
+                    const dayDiff = Math.floor((prevDate - currDate) / (1000 * 60 * 60 * 24));
+                    
+                    if (dayDiff === 1) {
+                        streak++;
+                    } else {
+                        break;
+                    }
+                }
+                
+                return streak;
+            }
+
+            // NEW: Get progress toward goal (percentage)
+            function getGoalProgress(person) {
+                if (!goals[person] || weights[person].length === 0) return null;
+                
+                const startWeight = weights[person][0].weight;
+                const currentWeight = weights[person][weights[person].length - 1].weight;
+                const goalWeight = goals[person];
+                
+                const totalToLose = startWeight - goalWeight;
+                if (totalToLose <= 0) return 100;
+                
+                const lost = startWeight - currentWeight;
+                const progress = (lost / totalToLose) * 100;
+                
+                return Math.min(Math.max(progress, 0), 100);
+            }
+
+            // NEW: Get badges for a person
+            function getBadges(person) {
+                const badges = [];
+                const loss = getWeightLoss(person);
+                const lossPct = getWeightLossPercentage(person);
+                const streak = getStreak(person);
+                const progress = getGoalProgress(person);
+                
+                // First entry badge
+                if (weights[person].length >= 1) {
+                    badges.push({ class: 'badge-first-entry', icon: '🎯', text: 'Started!' });
+                }
+                
+                // Weight loss milestones
+                if (loss >= 5) badges.push({ class: 'badge-5lbs', icon: '⭐', text: '5 lbs lost' });
+                if (loss >= 10) badges.push({ class: 'badge-10lbs', icon: '🌟', text: '10 lbs lost' });
+                if (loss >= 15) badges.push({ class: 'badge-15lbs', icon: '💫', text: '15 lbs lost' });
+                if (loss >= 20) badges.push({ class: 'badge-20lbs', icon: '🏆', text: '20 lbs lost' });
+                
+                // Percentage milestones
+                if (lossPct >= 5) badges.push({ class: 'badge-5pct', icon: '📉', text: '5% down' });
+                if (lossPct >= 10) badges.push({ class: 'badge-10pct', icon: '📊', text: '10% down' });
+                
+                // Streak badges
+                if (streak >= 7) badges.push({ class: 'badge-streak-7', icon: '🔥', text: '7 day streak' });
+                if (streak >= 14) badges.push({ class: 'badge-streak-14', icon: '🔥', text: '14 day streak' });
+                if (streak >= 30) badges.push({ class: 'badge-streak-30', icon: '💪', text: '30 day streak' });
+                
+                // Progress badges
+                if (progress !== null && progress >= 50 && progress < 100) {
+                    badges.push({ class: 'badge-halfway', icon: '🎯', text: 'Halfway there!' });
+                }
+                
+                // Goal achieved
+                if (hasMetGoal(person)) {
+                    badges.push({ class: 'badge-goal', icon: '👑', text: 'Goal Achieved!' });
+                }
+                
+                return badges;
+            }
+
             function downloadCSV() {
                 const entries = getAllEntries();
-                
                 let csv = 'Name,Weight (lbs),Timestamp\n';
-                
                 entries.forEach(entry => {
                     csv += entry.person + ',' + entry.weight + ',' + formatTimestamp(entry.timestamp) + '\n';
                 });
@@ -1481,16 +1707,12 @@
                                 title: {
                                     display: !isMobile,
                                     text: 'Date & Time',
-                                    font: {
-                                        size: isMobile ? 10 : 12
-                                    }
+                                    font: { size: isMobile ? 10 : 12 }
                                 },
                                 ticks: {
-                                    maxRotation: isMobile ? 45 : 45,
-                                    minRotation: isMobile ? 45 : 45,
-                                    font: {
-                                        size: isMobile ? 9 : 10
-                                    },
+                                    maxRotation: 45,
+                                    minRotation: 45,
+                                    font: { size: isMobile ? 9 : 10 },
                                     autoSkip: true,
                                     maxTicksLimit: isMobile ? 6 : 10
                                 }
@@ -1499,15 +1721,9 @@
                                 title: {
                                     display: true,
                                     text: isMobile ? 'lbs' : 'Weight (lbs)',
-                                    font: {
-                                        size: isMobile ? 10 : 12
-                                    }
+                                    font: { size: isMobile ? 10 : 12 }
                                 },
-                                ticks: {
-                                    font: {
-                                        size: isMobile ? 10 : 11
-                                    }
-                                }
+                                ticks: { font: { size: isMobile ? 10 : 11 } }
                             }
                         },
                         plugins: {
@@ -1515,9 +1731,7 @@
                                 position: 'top',
                                 labels: {
                                     padding: isMobile ? 10 : 20,
-                                    font: {
-                                        size: isMobile ? 11 : 12
-                                    },
+                                    font: { size: isMobile ? 11 : 12 },
                                     usePointStyle: true,
                                     boxWidth: isMobile ? 6 : 8,
                                     filter: function(legendItem) {
@@ -1529,12 +1743,8 @@
                                 enabled: true,
                                 backgroundColor: 'rgba(0, 0, 0, 0.8)',
                                 padding: isMobile ? 8 : 12,
-                                bodyFont: {
-                                    size: isMobile ? 11 : 13
-                                },
-                                titleFont: {
-                                    size: isMobile ? 12 : 14
-                                },
+                                bodyFont: { size: isMobile ? 11 : 13 },
+                                titleFont: { size: isMobile ? 12 : 14 },
                                 callbacks: {
                                     label: function(context) {
                                         if (context.parsed.y === null) return null;
@@ -1605,6 +1815,10 @@
 
                 html += '<div class="grid">';
                 people.forEach(person => {
+                    const streak = getStreak(person);
+                    const progress = getGoalProgress(person);
+                    const badges = getBadges(person);
+                    
                     html += '<div class="person-card">';
                     html += '<h3 class="person-name" style="color: ' + colors[person] + '">';
                     html += person;
@@ -1631,6 +1845,36 @@
                         html += '<p class="stat-text">Goal: ' + goals[person] + ' lbs</p>';
                     }
                     html += '</div>';
+
+                    // NEW: Progress bar toward goal
+                    if (progress !== null) {
+                        html += '<div class="progress-container">';
+                        html += '<div class="progress-label">';
+                        html += '<span>Progress to Goal</span>';
+                        html += '<span>' + progress.toFixed(0) + '%</span>';
+                        html += '</div>';
+                        html += '<div class="progress-bar">';
+                        html += '<div class="progress-fill" style="width: ' + progress + '%; background: ' + colors[person] + ';"></div>';
+                        html += '</div>';
+                        html += '</div>';
+                    }
+
+                    // NEW: Streak display
+                    if (streak > 0) {
+                        html += '<div class="streak-display' + (streak >= 7 ? ' hot' : '') + '">';
+                        html += '<span class="streak-fire">' + (streak >= 7 ? '🔥' : '📅') + '</span>';
+                        html += '<span><strong>' + streak + ' day' + (streak !== 1 ? 's' : '') + '</strong> logging streak!</span>';
+                        html += '</div>';
+                    }
+
+                    // NEW: Badges
+                    if (badges.length > 0) {
+                        html += '<div class="badges-container">';
+                        badges.forEach(badge => {
+                            html += '<span class="badge ' + badge.class + '">' + badge.icon + ' ' + badge.text + '</span>';
+                        });
+                        html += '</div>';
+                    }
 
                     if (weights[person].length > 0) {
                         html += '<div class="person-stats">';
@@ -1686,90 +1930,7 @@
                     html += '</table>';
                     html += '</div>';
                 }
-
-                // Message Board
-                html += '<div class="message-board">';
-                html += '<h2 class="message-board-title">Message Board 💬</h2>';
-                html += '<div class="message-input-area">';
-                html += '<select id="messagePerson" class="message-select">';
-                people.forEach(person => {
-                    html += '<option value="' + person + '">' + person + '</option>';
-                });
-                html += '</select>';
-                html += '<input type="text" id="messageInput" class="message-input" placeholder="Leave a message for the team..." maxlength="200" onkeypress="if(event.key===\'Enter\') postMessage()" />';
-                html += '<button class="btn-post" onclick="postMessage()">Post</button>';
-                html += '</div>';
-                html += '<div class="messages-list">';
-                if (messages.length > 0) {
-                    messages.forEach(msg => {
-                        html += '<div class="message-item">';
-                        html += '<div class="message-header">';
-                        html += '<span class="message-author" style="color: ' + colors[msg.person] + '">' + msg.person + '</span>';
-                        html += '<div>';
-                        html += '<span class="message-time">' + formatMessageTime(msg.timestamp) + '</span>';
-                        html += '<button class="btn-delete-message" onclick="deleteMessage(\'' + msg.id + '\')" title="Delete message">✕</button>';
-                        html += '</div>';
-                        html += '</div>';
-                        html += '<div class="message-text">' + msg.message + '</div>';
-                        html += '</div>';
-                    });
-                } else {
-                    html += '<p class="stat-text" style="text-align: center; padding: 2rem;">No messages yet. Be the first to post! 🎉</p>';
-                }
-                html += '</div>';
-                html += '</div>';
-
-                // Retroactive Entry
-                html += '<div class="retroactive-entry">';
-                html += '<h2 class="retroactive-title">Add Past Weight Entry 📝</h2>';
-                html += '<p class="stat-text" style="margin-bottom: 1rem;">Missed logging a weight? Add it here with the correct date and time.</p>';
-                html += '<div class="retroactive-form">';
-                html += '<div class="form-group">';
-                html += '<label class="form-label">Name</label>';
-                html += '<select id="retroPerson" class="form-input">';
-                people.forEach(person => {
-                    html += '<option value="' + person + '">' + person + '</option>';
-                });
-                html += '</select>';
-                html += '</div>';
-                html += '<div class="form-group">';
-                html += '<label class="form-label">Weight (lbs)</label>';
-                html += '<input type="number" step="0.1" id="retroWeight" class="form-input" placeholder="Enter weight" />';
-                html += '</div>';
-                html += '<div class="form-group">';
-                html += '<label class="form-label">Date</label>';
-                html += '<input type="date" id="retroDate" class="form-input" />';
-                html += '</div>';
-                html += '<div class="form-group">';
-                html += '<label class="form-label">Time</label>';
-                html += '<input type="time" id="retroTime" class="form-input" />';
-                html += '</div>';
-                html += '<div class="form-group">';
-                html += '<button class="btn-add-retroactive" onclick="addRetroactiveWeight()">Add Entry</button>';
-                html += '</div>';
-                html += '</div>';
-                html += '</div>';
-
-                // Recipe of the Day
-                html += '<div class="recipe-container">';
-                html += '<h2 class="recipe-title">🥗 Recipe of the Day</h2>';
-                html += '<div class="recipe-name">' + dailyRecipe.name + '</div>';
-                html += '<div class="portion-selector">';
-                html += '<button class="portion-btn active" onclick="setPortions(1)">1 Serving</button>';
-                html += '<button class="portion-btn" onclick="setPortions(2)">2 Servings</button>';
-                html += '</div>';
-                html += '<div class="recipe-section">';
-                html += '<div class="recipe-section-title">Ingredients</div>';
-                html += '<ul class="ingredients-list" id="ingredientsList">';
-                dailyRecipe.ingredients1.forEach(ing => {
-                    html += '<li>' + ing + '</li>';
-                });
-                html += '</ul>';
-                html += '</div>';
-                html += '<div class="recipe-section">';
-                html += '<div class="recipe-section-title">Instructions</div>';
-                html += '<ol class="instructions-list">';
-                dailyRecipe.instructions.forEach(step => {
+yRecipe.instructions.forEach(step => {
                     html += '<li>' + step + '</li>';
                 });
                 html += '</ol>';
