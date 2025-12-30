@@ -330,7 +330,7 @@
             padding: 1.5rem;
             border-radius: 0.5rem;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-top: 2rem;
+            margin-bottom: 2rem;
         }
         
         .message-board-title {
@@ -353,6 +353,7 @@
             border-radius: 0.375rem;
             font-size: 1rem;
             background: white;
+            width: 120px;
         }
         
         .message-input {
@@ -1085,8 +1086,9 @@
         }
         
         function checkFirebase() {
-            if (typeof firebase !== 'undefined') {
-                console.log('Firebase loaded!');
+            // FIXED: Now checks for both firebase AND firestore
+            if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+                console.log('Firebase and Firestore loaded!');
                 initApp();
             } else {
                 console.log('Waiting for Firebase...');
@@ -1101,883 +1103,936 @@
         }
 
         function initApp() {
-            const firebaseConfig = {
-                apiKey: "AIzaSyBpcOAWrr8hV2LQ2_mIUfIgvs05y2AYTRY",
-                authDomain: "cherokee-chooters-shred.firebaseapp.com",
-                projectId: "cherokee-chooters-shred",
-                storageBucket: "cherokee-chooters-shred.firebasestorage.app",
-                messagingSenderId: "448611335080",
-                appId: "1:448611335080:web:eb9eb0688d9b846e0cbb9d"
-            };
+            try {
+                const firebaseConfig = {
+                    apiKey: "AIzaSyBpcOAWrr8hV2LQ2_mIUfIgvs05y2AYTRY",
+                    authDomain: "cherokee-chooters-shred.firebaseapp.com",
+                    projectId: "cherokee-chooters-shred",
+                    storageBucket: "cherokee-chooters-shred.firebasestorage.app",
+                    messagingSenderId: "448611335080",
+                    appId: "1:448611335080:web:eb9eb0688d9b846e0cbb9d"
+                };
 
-            console.log('Initializing Firebase...');
-            firebase.initializeApp(firebaseConfig);
-            const db = firebase.firestore();
-            console.log('Firebase initialized!');
+                console.log('Initializing Firebase...');
+                firebase.initializeApp(firebaseConfig);
+                const db = firebase.firestore();
+                console.log('Firebase initialized!');
 
-            const people = ['Adam', 'Sean', 'Daniel', 'Mark'];
-            const colors = {
-                Adam: '#3b82f6',
-                Sean: '#ef4444',
-                Daniel: '#10b981',
-                Mark: '#f59e0b'
-            };
+                const people = ['Adam', 'Sean', 'Daniel', 'Mark'];
+                const colors = {
+                    Adam: '#3b82f6',
+                    Sean: '#ef4444',
+                    Daniel: '#10b981',
+                    Mark: '#f59e0b'
+                };
 
-            let weights = { Adam: [], Sean: [], Daniel: [], Mark: [] };
-            let goals = { Adam: null, Sean: null, Daniel: null, Mark: null };
-            let loaded = false;
-            let chart = null;
-            let messages = [];
+                let weights = { Adam: [], Sean: [], Daniel: [], Mark: [] };
+                let goals = { Adam: null, Sean: null, Daniel: null, Mark: null };
+                let loaded = false;
+                let chart = null;
+                let messages = [];
 
-            console.log('Setting up listeners...');
-            
-            db.collection('weights').onSnapshot((snapshot) => {
-                console.log('Weights snapshot received, docs:', snapshot.size);
-                weights = { Adam: [], Sean: [], Daniel: [], Mark: [] };
+                console.log('Setting up listeners...');
                 
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    if (weights[data.person] !== undefined) {
-                        weights[data.person].push({
+                db.collection('weights').onSnapshot((snapshot) => {
+                    console.log('Weights snapshot received, docs:', snapshot.size);
+                    weights = { Adam: [], Sean: [], Daniel: [], Mark: [] };
+                    
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        if (weights[data.person] !== undefined) {
+                            weights[data.person].push({
+                                id: doc.id,
+                                timestamp: data.timestamp,
+                                weight: data.weight
+                            });
+                        }
+                    });
+
+                    Object.keys(weights).forEach(person => {
+                        weights[person].sort((a, b) => a.timestamp - b.timestamp);
+                    });
+
+                    loaded = true;
+                    render();
+                }, (error) => {
+                    console.error('Error loading weights:', error);
+                    document.getElementById('root').innerHTML = '<div class="error"><h2>Error Loading Data</h2><p>' + error.message + '</p></div>';
+                });
+
+                db.collection('goals').onSnapshot((snapshot) => {
+                    console.log('Goals snapshot received, docs:', snapshot.size);
+                    goals = { Adam: null, Sean: null, Daniel: null, Mark: null };
+                    
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        goals[data.person] = data.goal;
+                    });
+
+                    if (loaded) render();
+                }, (error) => {
+                    console.error('Error loading goals:', error);
+                });
+
+                db.collection('messages').orderBy('timestamp', 'desc').limit(20).onSnapshot((snapshot) => {
+                    console.log('Messages snapshot received, docs:', snapshot.size);
+                    messages = [];
+                    
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        messages.push({
                             id: doc.id,
-                            timestamp: data.timestamp,
-                            weight: data.weight
+                            person: data.person,
+                            message: data.message,
+                            timestamp: data.timestamp
                         });
-                    }
-                });
-
-                Object.keys(weights).forEach(person => {
-                    weights[person].sort((a, b) => a.timestamp - b.timestamp);
-                });
-
-                loaded = true;
-                render();
-            }, (error) => {
-                console.error('Error loading weights:', error);
-                document.getElementById('root').innerHTML = '<div class="error"><h2>Error Loading Data</h2><p>' + error.message + '</p></div>';
-            });
-
-            db.collection('goals').onSnapshot((snapshot) => {
-                console.log('Goals snapshot received, docs:', snapshot.size);
-                goals = { Adam: null, Sean: null, Daniel: null, Mark: null };
-                
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    goals[data.person] = data.goal;
-                });
-
-                if (loaded) render();
-            }, (error) => {
-                console.error('Error loading goals:', error);
-            });
-
-            db.collection('messages').orderBy('timestamp', 'desc').limit(20).onSnapshot((snapshot) => {
-                console.log('Messages snapshot received, docs:', snapshot.size);
-                messages = [];
-                
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    messages.push({
-                        id: doc.id,
-                        person: data.person,
-                        message: data.message,
-                        timestamp: data.timestamp
                     });
+
+                    if (loaded) render();
+                }, (error) => {
+                    console.error('Error loading messages:', error);
                 });
 
-                if (loaded) render();
-            }, (error) => {
-                console.error('Error loading messages:', error);
-            });
-
-            window.addWeight = async function(person) {
-                const input = document.getElementById('weight-' + person);
-                const weight = parseFloat(input.value);
-                
-                if (isNaN(weight) || weight <= 0) {
-                    alert('Please enter a valid weight');
-                    return;
-                }
-
-                const goalAchieved = goals[person] && weight <= goals[person] && 
-                    (weights[person].length === 0 || weights[person][weights[person].length - 1].weight > goals[person]);
-
-                try {
-                    await db.collection('weights').add({
-                        person: person,
-                        weight: weight,
-                        timestamp: Date.now()
-                    });
-                    input.value = '';
+                window.addWeight = async function(person) {
+                    const input = document.getElementById('weight-' + person);
+                    const weight = parseFloat(input.value);
                     
-                    if (goalAchieved) {
-                        celebrate();
+                    if (isNaN(weight) || weight <= 0) {
+                        alert('Please enter a valid weight');
+                        return;
                     }
-                } catch (error) {
-                    console.error('Error adding weight:', error);
-                    alert('Error saving weight: ' + error.message);
-                }
-            }
 
-            window.setGoal = async function(person) {
-                const input = document.getElementById('goal-' + person);
-                const goal = parseFloat(input.value);
-                
-                if (isNaN(goal) || goal <= 0) {
-                    alert('Please enter a valid goal');
-                    return;
-                }
+                    const goalAchieved = goals[person] && weight <= goals[person] && 
+                        (weights[person].length === 0 || weights[person][weights[person].length - 1].weight > goals[person]);
 
-                try {
-                    const goalQuery = await db.collection('goals')
-                        .where('person', '==', person)
-                        .get();
-
-                    if (goalQuery.empty) {
-                        await db.collection('goals').add({
+                    try {
+                        await db.collection('weights').add({
                             person: person,
-                            goal: goal
+                            weight: weight,
+                            timestamp: Date.now()
                         });
-                    } else {
-                        await db.collection('goals').doc(goalQuery.docs[0].id).update({
-                            goal: goal
-                        });
-                    }
-                    input.value = '';
-                } catch (error) {
-                    console.error('Error setting goal:', error);
-                    alert('Error saving goal: ' + error.message);
-                }
-            }
-
-            window.deleteLastWeight = async function(person) {
-                if (weights[person].length === 0) return;
-                
-                const lastEntry = weights[person][weights[person].length - 1];
-                
-                if (!confirm('Delete last weight entry (' + lastEntry.weight + ' lbs)?')) {
-                    return;
-                }
-                
-                try {
-                    await db.collection('weights').doc(lastEntry.id).delete();
-                } catch (error) {
-                    console.error('Error deleting weight:', error);
-                    alert('Error deleting weight: ' + error.message);
-                }
-            }
-
-            function getWeightLoss(person) {
-                if (weights[person].length < 2) return 0;
-                return weights[person][0].weight - weights[person][weights[person].length - 1].weight;
-            }
-
-            function getWeightLossPercentage(person) {
-                if (weights[person].length < 2) return 0;
-                const loss = getWeightLoss(person);
-                return (loss / weights[person][0].weight) * 100;
-            }
-
-            function getTotalWeightLoss() {
-                return people.reduce((total, person) => total + getWeightLoss(person), 0);
-            }
-
-            function getDaysUntilCruise() {
-                const cruiseDate = new Date('2026-02-27');
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                cruiseDate.setHours(0, 0, 0, 0);
-                return Math.ceil((cruiseDate - today) / (1000 * 60 * 60 * 24));
-            }
-
-            function getLeaderByPounds() {
-                let leader = null;
-                let maxLoss = 0;
-                
-                people.forEach(person => {
-                    const loss = getWeightLoss(person);
-                    if (loss > maxLoss) {
-                        maxLoss = loss;
-                        leader = person;
-                    }
-                });
-                
-                return leader ? { name: leader, loss: maxLoss } : null;
-            }
-
-            function getLeaderByPercentage() {
-                let leader = null;
-                let maxPercentage = 0;
-                
-                people.forEach(person => {
-                    const percentage = getWeightLossPercentage(person);
-                    if (percentage > maxPercentage) {
-                        maxPercentage = percentage;
-                        leader = person;
-                    }
-                });
-                
-                return leader ? { name: leader, percentage: maxPercentage } : null;
-            }
-
-            function formatLastEntry(timestamp) {
-                const date = new Date(timestamp);
-                const today = new Date();
-                const dateStr = date.toLocaleDateString();
-                const todayStr = today.toLocaleDateString();
-                const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                if (dateStr === todayStr) {
-                    return 'Today at ' + timeStr;
-                }
-                return date.toLocaleDateString() + ' at ' + timeStr;
-            }
-
-            function getAllEntries() {
-                const allEntries = [];
-                people.forEach(person => {
-                    weights[person].forEach(entry => {
-                        allEntries.push({
-                            person: person,
-                            weight: entry.weight,
-                            timestamp: entry.timestamp
-                        });
-                    });
-                });
-                allEntries.sort((a, b) => b.timestamp - a.timestamp);
-                return allEntries;
-            }
-
-            function formatTimestamp(timestamp) {
-                const date = new Date(timestamp);
-                const dateStr = date.toLocaleDateString();
-                const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                return dateStr + ' ' + timeStr;
-            }
-
-            function hasMetGoal(person) {
-                if (!goals[person] || weights[person].length === 0) return false;
-                const currentWeight = weights[person][weights[person].length - 1].weight;
-                return currentWeight <= goals[person];
-            }
-
-            // NEW: Calculate streak (consecutive days with weigh-ins)
-            function getStreak(person) {
-                if (weights[person].length === 0) return 0;
-                
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                
-                // Get unique days with entries (sorted newest first)
-                const entryDays = [];
-                weights[person].forEach(entry => {
-                    const entryDate = new Date(entry.timestamp);
-                    entryDate.setHours(0, 0, 0, 0);
-                    const dateStr = entryDate.toISOString().split('T')[0];
-                    if (!entryDays.includes(dateStr)) {
-                        entryDays.push(dateStr);
-                    }
-                });
-                entryDays.sort().reverse();
-                
-                // Check if most recent entry is today or yesterday
-                const mostRecentDate = new Date(entryDays[0]);
-                const diffDays = Math.floor((today - mostRecentDate) / (1000 * 60 * 60 * 24));
-                
-                if (diffDays > 1) return 0; // Streak broken
-                
-                let streak = 1;
-                for (let i = 1; i < entryDays.length; i++) {
-                    const prevDate = new Date(entryDays[i - 1]);
-                    const currDate = new Date(entryDays[i]);
-                    const dayDiff = Math.floor((prevDate - currDate) / (1000 * 60 * 60 * 24));
-                    
-                    if (dayDiff === 1) {
-                        streak++;
-                    } else {
-                        break;
-                    }
-                }
-                
-                return streak;
-            }
-
-            // NEW: Get progress toward goal (percentage)
-            function getGoalProgress(person) {
-                if (!goals[person] || weights[person].length === 0) return null;
-                
-                const startWeight = weights[person][0].weight;
-                const currentWeight = weights[person][weights[person].length - 1].weight;
-                const goalWeight = goals[person];
-                
-                const totalToLose = startWeight - goalWeight;
-                if (totalToLose <= 0) return 100;
-                
-                const lost = startWeight - currentWeight;
-                const progress = (lost / totalToLose) * 100;
-                
-                return Math.min(Math.max(progress, 0), 100);
-            }
-
-            // NEW: Get badges for a person
-            function getBadges(person) {
-                const badges = [];
-                const loss = getWeightLoss(person);
-                const lossPct = getWeightLossPercentage(person);
-                const streak = getStreak(person);
-                const progress = getGoalProgress(person);
-                
-                // First entry badge
-                if (weights[person].length >= 1) {
-                    badges.push({ class: 'badge-first-entry', icon: '🎯', text: 'Started!' });
-                }
-                
-                // Weight loss milestones
-                if (loss >= 5) badges.push({ class: 'badge-5lbs', icon: '⭐', text: '5 lbs lost' });
-                if (loss >= 10) badges.push({ class: 'badge-10lbs', icon: '🌟', text: '10 lbs lost' });
-                if (loss >= 15) badges.push({ class: 'badge-15lbs', icon: '💫', text: '15 lbs lost' });
-                if (loss >= 20) badges.push({ class: 'badge-20lbs', icon: '🏆', text: '20 lbs lost' });
-                
-                // Percentage milestones
-                if (lossPct >= 5) badges.push({ class: 'badge-5pct', icon: '📉', text: '5% down' });
-                if (lossPct >= 10) badges.push({ class: 'badge-10pct', icon: '📊', text: '10% down' });
-                
-                // Streak badges
-                if (streak >= 7) badges.push({ class: 'badge-streak-7', icon: '🔥', text: '7 day streak' });
-                if (streak >= 14) badges.push({ class: 'badge-streak-14', icon: '🔥', text: '14 day streak' });
-                if (streak >= 30) badges.push({ class: 'badge-streak-30', icon: '💪', text: '30 day streak' });
-                
-                // Progress badges
-                if (progress !== null && progress >= 50 && progress < 100) {
-                    badges.push({ class: 'badge-halfway', icon: '🎯', text: 'Halfway there!' });
-                }
-                
-                // Goal achieved
-                if (hasMetGoal(person)) {
-                    badges.push({ class: 'badge-goal', icon: '👑', text: 'Goal Achieved!' });
-                }
-                
-                return badges;
-            }
-
-            function downloadCSV() {
-                const entries = getAllEntries();
-                let csv = 'Name,Weight (lbs),Timestamp\n';
-                entries.forEach(entry => {
-                    csv += entry.person + ',' + entry.weight + ',' + formatTimestamp(entry.timestamp) + '\n';
-                });
-                
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'cherokee-chooters-weight-history-' + new Date().toISOString().split('T')[0] + '.csv';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-            }
-
-            window.downloadCSV = downloadCSV;
-
-            function getDailyQuote() {
-                const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
-                return inspirationalQuotes[dayOfYear % inspirationalQuotes.length];
-            }
-
-            window.postMessage = async function() {
-                const personSelect = document.getElementById('messagePerson');
-                const messageInput = document.getElementById('messageInput');
-                
-                const person = personSelect.value;
-                const message = messageInput.value.trim();
-                
-                if (!message) {
-                    alert('Please enter a message');
-                    return;
-                }
-
-                try {
-                    await db.collection('messages').add({
-                        person: person,
-                        message: message,
-                        timestamp: Date.now()
-                    });
-                    messageInput.value = '';
-                } catch (error) {
-                    console.error('Error posting message:', error);
-                    alert('Error posting message: ' + error.message);
-                }
-            }
-
-            window.deleteMessage = async function(messageId) {
-                if (!confirm('Delete this message?')) {
-                    return;
-                }
-                
-                try {
-                    await db.collection('messages').doc(messageId).delete();
-                } catch (error) {
-                    console.error('Error deleting message:', error);
-                    alert('Error deleting message: ' + error.message);
-                }
-            }
-
-            function celebrate() {
-                const container = document.createElement('div');
-                container.className = 'confetti-container';
-                document.body.appendChild(container);
-                
-                const confettiColors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff1493'];
-                
-                for (let i = 0; i < 150; i++) {
-                    setTimeout(() => {
-                        const confetti = document.createElement('div');
-                        confetti.className = 'confetti';
-                        confetti.style.left = Math.random() * 100 + '%';
-                        confetti.style.background = confettiColors[Math.floor(Math.random() * confettiColors.length)];
-                        confetti.style.animationDelay = Math.random() * 0.5 + 's';
-                        confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
-                        container.appendChild(confetti);
-                    }, i * 20);
-                }
-                setTimeout(() => {
-                    document.body.removeChild(container);
-                }, 5000);
-            }
-
-            window.addRetroactiveWeight = async function() {
-                const personSelect = document.getElementById('retroPerson');
-                const weightInput = document.getElementById('retroWeight');
-                const dateInput = document.getElementById('retroDate');
-                const timeInput = document.getElementById('retroTime');
-                
-                const person = personSelect.value;
-                const weight = parseFloat(weightInput.value);
-                const date = dateInput.value;
-                const time = timeInput.value;
-                
-                if (isNaN(weight) || weight <= 0) {
-                    alert('Please enter a valid weight');
-                    return;
-                }
-                
-                if (!date) {
-                    alert('Please select a date');
-                    return;
-                }
-                
-                if (!time) {
-                    alert('Please select a time');
-                    return;
-                }
-                
-                const dateTimeString = date + 'T' + time;
-                const timestamp = new Date(dateTimeString).getTime();
-                
-                if (isNaN(timestamp)) {
-                    alert('Invalid date/time combination');
-                    return;
-                }
-
-                try {
-                    await db.collection('weights').add({
-                        person: person,
-                        weight: weight,
-                        timestamp: timestamp
-                    });
-                    
-                    weightInput.value = '';
-                    dateInput.value = '';
-                    timeInput.value = '';
-                    
-                    alert('Retroactive weight entry added successfully!');
-                } catch (error) {
-                    console.error('Error adding retroactive weight:', error);
-                    alert('Error adding weight: ' + error.message);
-                }
-            }
-
-            function formatMessageTime(timestamp) {
-                const date = new Date(timestamp);
-                const now = new Date();
-                const diffMs = now - date;
-                const diffMins = Math.floor(diffMs / 60000);
-                const diffHours = Math.floor(diffMs / 3600000);
-                const diffDays = Math.floor(diffMs / 86400000);
-
-                if (diffMins < 1) return 'Just now';
-                if (diffMins < 60) return diffMins + 'm ago';
-                if (diffHours < 24) return diffHours + 'h ago';
-                if (diffDays < 7) return diffDays + 'd ago';
-                return date.toLocaleDateString();
-            }
-
-            function updateChart() {
-                const hasData = people.some(p => weights[p].length > 0);
-                if (!hasData) return;
-
-                const allTimestamps = new Set();
-                people.forEach(person => {
-                    weights[person].forEach(entry => {
-                        allTimestamps.add(entry.timestamp);
-                    });
-                });
-                
-                const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
-                
-                const labels = sortedTimestamps.map(ts => {
-                    const date = new Date(ts);
-                    const month = date.getMonth() + 1;
-                    const day = date.getDate();
-                    const hours = date.getHours();
-                    const minutes = date.getMinutes().toString().padStart(2, '0');
-                    return month + '/' + day + ' ' + hours + ':' + minutes;
-                });
-
-                const datasets = people.map(person => {
-                    const data = [];
-                    let lastWeight = null;
-
-                    sortedTimestamps.forEach(timestamp => {
-                        const entry = weights[person].find(w => w.timestamp === timestamp);
-                        if (entry) {
-                            lastWeight = entry.weight;
-                        }
-                        data.push(lastWeight);
-                    });
-
-                    return {
-                        label: person,
-                        data: data,
-                        borderColor: colors[person],
-                        backgroundColor: colors[person] + '33',
-                        borderWidth: 3,
-                        pointRadius: 5,
-                        pointHoverRadius: 7,
-                        tension: 0.1,
-                        spanGaps: false
-                    };
-                }).filter(dataset => dataset.data.some(d => d !== null));
-
-                people.forEach(person => {
-                    if (goals[person] && weights[person].length > 0) {
-                        const goalData = new Array(sortedTimestamps.length).fill(goals[person]);
+                        input.value = '';
                         
-                        datasets.push({
-                            label: person + "'s Goal",
-                            data: goalData,
-                            borderColor: colors[person],
-                            backgroundColor: 'transparent',
-                            borderWidth: 2,
-                            borderDash: [5, 5],
-                            pointRadius: 0,
-                            tension: 0,
-                            hidden: true
-                        });
+                        if (goalAchieved) {
+                            celebrate();
+                        }
+                    } catch (error) {
+                        console.error('Error adding weight:', error);
+                        alert('Error saving weight: ' + error.message);
                     }
-                });
-
-                if (chart) {
-                    chart.destroy();
                 }
 
-                const ctx = document.getElementById('weightChart');
-                if (!ctx) return;
+                window.setGoal = async function(person) {
+                    const input = document.getElementById('goal-' + person);
+                    const goal = parseFloat(input.value);
+                    
+                    if (isNaN(goal) || goal <= 0) {
+                        alert('Please enter a valid goal');
+                        return;
+                    }
 
-                const isMobile = window.innerWidth < 768;
+                    try {
+                        const goalQuery = await db.collection('goals')
+                            .where('person', '==', person)
+                            .get();
 
-                chart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: datasets
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        interaction: {
-                            mode: 'index',
-                            intersect: false,
-                        },
-                        scales: {
-                            x: {
-                                title: {
-                                    display: !isMobile,
-                                    text: 'Date & Time',
-                                    font: { size: isMobile ? 10 : 12 }
-                                },
-                                ticks: {
-                                    maxRotation: 45,
-                                    minRotation: 45,
-                                    font: { size: isMobile ? 9 : 10 },
-                                    autoSkip: true,
-                                    maxTicksLimit: isMobile ? 6 : 10
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: isMobile ? 'lbs' : 'Weight (lbs)',
-                                    font: { size: isMobile ? 10 : 12 }
-                                },
-                                ticks: { font: { size: isMobile ? 10 : 11 } }
+                        if (goalQuery.empty) {
+                            await db.collection('goals').add({
+                                person: person,
+                                goal: goal
+                            });
+                        } else {
+                            await db.collection('goals').doc(goalQuery.docs[0].id).update({
+                                goal: goal
+                            });
+                        }
+                        input.value = '';
+                    } catch (error) {
+                        console.error('Error setting goal:', error);
+                        alert('Error saving goal: ' + error.message);
+                    }
+                }
+
+                window.deleteLastWeight = async function(person) {
+                    if (weights[person].length === 0) return;
+                    
+                    const lastEntry = weights[person][weights[person].length - 1];
+                    
+                    if (!confirm('Delete last weight entry (' + lastEntry.weight + ' lbs)?')) {
+                        return;
+                    }
+                    
+                    try {
+                        await db.collection('weights').doc(lastEntry.id).delete();
+                    } catch (error) {
+                        console.error('Error deleting weight:', error);
+                        alert('Error deleting weight: ' + error.message);
+                    }
+                }
+
+                function getWeightLoss(person) {
+                    if (weights[person].length < 2) return 0;
+                    return weights[person][0].weight - weights[person][weights[person].length - 1].weight;
+                }
+
+                function getWeightLossPercentage(person) {
+                    if (weights[person].length < 2) return 0;
+                    const loss = getWeightLoss(person);
+                    return (loss / weights[person][0].weight) * 100;
+                }
+
+                function getTotalWeightLoss() {
+                    return people.reduce((total, person) => total + getWeightLoss(person), 0);
+                }
+
+                function getDaysUntilCruise() {
+                    const cruiseDate = new Date('2026-02-27');
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    cruiseDate.setHours(0, 0, 0, 0);
+                    return Math.ceil((cruiseDate - today) / (1000 * 60 * 60 * 24));
+                }
+
+                function getLeaderByPounds() {
+                    let leader = null;
+                    let maxLoss = 0;
+                    
+                    people.forEach(person => {
+                        const loss = getWeightLoss(person);
+                        if (loss > maxLoss) {
+                            maxLoss = loss;
+                            leader = person;
+                        }
+                    });
+                    
+                    return leader ? { name: leader, loss: maxLoss } : null;
+                }
+
+                function getLeaderByPercentage() {
+                    let leader = null;
+                    let maxPercentage = 0;
+                    
+                    people.forEach(person => {
+                        const percentage = getWeightLossPercentage(person);
+                        if (percentage > maxPercentage) {
+                            maxPercentage = percentage;
+                            leader = person;
+                        }
+                    });
+                    
+                    return leader ? { name: leader, percentage: maxPercentage } : null;
+                }
+
+                function formatLastEntry(timestamp) {
+                    const date = new Date(timestamp);
+                    const today = new Date();
+                    const dateStr = date.toLocaleDateString();
+                    const todayStr = today.toLocaleDateString();
+                    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                    if (dateStr === todayStr) {
+                        return 'Today at ' + timeStr;
+                    }
+                    return date.toLocaleDateString() + ' at ' + timeStr;
+                }
+
+                function getAllEntries() {
+                    const allEntries = [];
+                    people.forEach(person => {
+                        weights[person].forEach(entry => {
+                            allEntries.push({
+                                person: person,
+                                weight: entry.weight,
+                                timestamp: entry.timestamp
+                            });
+                        });
+                    });
+                    allEntries.sort((a, b) => b.timestamp - a.timestamp);
+                    return allEntries;
+                }
+
+                function formatTimestamp(timestamp) {
+                    const date = new Date(timestamp);
+                    const dateStr = date.toLocaleDateString();
+                    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    return dateStr + ' ' + timeStr;
+                }
+
+                function hasMetGoal(person) {
+                    if (!goals[person] || weights[person].length === 0) return false;
+                    const currentWeight = weights[person][weights[person].length - 1].weight;
+                    return currentWeight <= goals[person];
+                }
+
+                // NEW: Calculate streak (consecutive days with weigh-ins)
+                function getStreak(person) {
+                    if (weights[person].length === 0) return 0;
+                    
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    
+                    // Get unique days with entries (sorted newest first)
+                    const entryDays = [];
+                    weights[person].forEach(entry => {
+                        try {
+                            const entryDate = new Date(entry.timestamp);
+                            if (isNaN(entryDate.getTime())) return; // skip invalid dates
+                            
+                            entryDate.setHours(0, 0, 0, 0);
+                            const dateStr = entryDate.toISOString().split('T')[0];
+                            if (!entryDays.includes(dateStr)) {
+                                entryDays.push(dateStr);
                             }
-                        },
-                        plugins: {
-                            legend: {
-                                position: 'top',
-                                labels: {
-                                    padding: isMobile ? 10 : 20,
-                                    font: { size: isMobile ? 11 : 12 },
-                                    usePointStyle: true,
-                                    boxWidth: isMobile ? 6 : 8,
-                                    filter: function(legendItem) {
-                                        return !legendItem.text.includes('Goal');
-                                    }
-                                }
-                            },
-                            tooltip: {
-                                enabled: true,
-                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                padding: isMobile ? 8 : 12,
-                                bodyFont: { size: isMobile ? 11 : 13 },
-                                titleFont: { size: isMobile ? 12 : 14 },
-                                callbacks: {
-                                    label: function(context) {
-                                        if (context.parsed.y === null) return null;
-                                        return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + ' lbs';
-                                    }
-                                }
-                            }
+                        } catch(e) {
+                            console.error('Error parsing date in streak calculation', e);
+                        }
+                    });
+                    entryDays.sort().reverse();
+                    
+                    // Check if most recent entry is today or yesterday
+                    const mostRecentDate = new Date(entryDays[0]);
+                    const diffDays = Math.floor((today - mostRecentDate) / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays > 1) return 0; // Streak broken
+                    
+                    let streak = 1;
+                    for (let i = 1; i < entryDays.length; i++) {
+                        const prevDate = new Date(entryDays[i - 1]);
+                        const currDate = new Date(entryDays[i]);
+                        const dayDiff = Math.floor((prevDate - currDate) / (1000 * 60 * 60 * 24));
+                        
+                        if (dayDiff === 1) {
+                            streak++;
+                        } else {
+                            break;
                         }
                     }
-                });
-            }
-
-            window.setPortions = function(portions) {
-                const recipe = getDailyRecipe();
-                const ingredientsList = document.getElementById('ingredientsList');
-                const buttons = document.querySelectorAll('.portion-btn');
-                
-                buttons.forEach((btn, index) => {
-                    btn.classList.toggle('active', index === portions - 1);
-                });
-                
-                const ingredients = portions === 1 ? recipe.ingredients1 : recipe.ingredients2;
-                ingredientsList.innerHTML = ingredients.map(ing => '<li>' + ing + '</li>').join('');
-            }
-
-            function render() {
-                console.log('Rendering...');
-                const hasData = people.some(p => weights[p].length > 0);
-                const poundsLeader = getLeaderByPounds();
-                const pctLeader = getLeaderByPercentage();
-                const dailyRecipe = getDailyRecipe();
-
-                let html = '<div class="container">';
-                html += '<div class="header">';
-                html += '<h1>⚖️ Cherokee Chooters Shred ⚖️</h1>';
-                html += '<p class="subtitle">' + getDailyQuote() + '</p>';
-                html += '</div>';
-
-                html += '<div class="stats">';
-                html += '<div class="stat-card cruise">';
-                html += '<div class="stat-label">Days Until Cruise 🚢</div>';
-                html += '<div class="stat-value">' + getDaysUntilCruise() + '</div>';
-                html += '</div>';
-                
-                if (hasData) {
-                    html += '<div class="stat-card total">';
-                    html += '<div class="stat-label">Total Weight Lost Together</div>';
-                    html += '<div class="stat-value">' + getTotalWeightLoss().toFixed(1) + ' lbs</div>';
-                    html += '</div>';
-                }
-                html += '</div>';
-
-                if (hasData && poundsLeader) {
-                    html += '<div class="stats">';
-                    html += '<div class="stat-card leader">';
-                    html += '<div class="stat-label">🏆 Pounds Leader</div>';
-                    html += '<div class="stat-value">' + poundsLeader.name + '</div>';
-                    html += '<div class="stat-subtext">' + poundsLeader.loss.toFixed(1) + ' lbs lost</div>';
-                    html += '</div>';
                     
-                    html += '<div class="stat-card leader-pct">';
-                    html += '<div class="stat-label">🏆 Percentage Leader</div>';
-                    html += '<div class="stat-value">' + pctLeader.name + '</div>';
-                    html += '<div class="stat-subtext">' + pctLeader.percentage.toFixed(1) + '% lost</div>';
-                    html += '</div>';
-                    html += '</div>';
+                    return streak;
                 }
 
-                html += '<div class="grid">';
-                people.forEach(person => {
+                // NEW: Get progress toward goal (percentage)
+                function getGoalProgress(person) {
+                    if (!goals[person] || weights[person].length === 0) return null;
+                    
+                    const startWeight = weights[person][0].weight;
+                    const currentWeight = weights[person][weights[person].length - 1].weight;
+                    const goalWeight = goals[person];
+                    
+                    const totalToLose = startWeight - goalWeight;
+                    if (totalToLose <= 0) return 100;
+                    
+                    const lost = startWeight - currentWeight;
+                    const progress = (lost / totalToLose) * 100;
+                    
+                    return Math.min(Math.max(progress, 0), 100);
+                }
+
+                // NEW: Get badges for a person
+                function getBadges(person) {
+                    const badges = [];
+                    const loss = getWeightLoss(person);
+                    const lossPct = getWeightLossPercentage(person);
                     const streak = getStreak(person);
                     const progress = getGoalProgress(person);
-                    const badges = getBadges(person);
                     
-                    html += '<div class="person-card">';
-                    html += '<h3 class="person-name" style="color: ' + colors[person] + '">';
-                    html += person;
+                    // First entry badge
+                    if (weights[person].length >= 1) {
+                        badges.push({ class: 'badge-first-entry', icon: '🎯', text: 'Started!' });
+                    }
+                    
+                    // Weight loss milestones
+                    if (loss >= 5) badges.push({ class: 'badge-5lbs', icon: '⭐', text: '5 lbs lost' });
+                    if (loss >= 10) badges.push({ class: 'badge-10lbs', icon: '🌟', text: '10 lbs lost' });
+                    if (loss >= 15) badges.push({ class: 'badge-15lbs', icon: '💫', text: '15 lbs lost' });
+                    if (loss >= 20) badges.push({ class: 'badge-20lbs', icon: '🏆', text: '20 lbs lost' });
+                    
+                    // Percentage milestones
+                    if (lossPct >= 5) badges.push({ class: 'badge-5pct', icon: '📉', text: '5% down' });
+                    if (lossPct >= 10) badges.push({ class: 'badge-10pct', icon: '📊', text: '10% down' });
+                    
+                    // Streak badges
+                    if (streak >= 7) badges.push({ class: 'badge-streak-7', icon: '🔥', text: '7 day streak' });
+                    if (streak >= 14) badges.push({ class: 'badge-streak-14', icon: '🔥', text: '14 day streak' });
+                    if (streak >= 30) badges.push({ class: 'badge-streak-30', icon: '💪', text: '30 day streak' });
+                    
+                    // Progress badges
+                    if (progress !== null && progress >= 50 && progress < 100) {
+                        badges.push({ class: 'badge-halfway', icon: '🎯', text: 'Halfway there!' });
+                    }
+                    
+                    // Goal achieved
                     if (hasMetGoal(person)) {
-                        html += '<span class="goal-celebration">🎉🎊</span>';
+                        badges.push({ class: 'badge-goal', icon: '👑', text: 'Goal Achieved!' });
                     }
-                    html += '</h3>';
                     
-                    html += '<div class="input-group">';
-                    html += '<label>Today\'s Weight (lbs)</label>';
-                    html += '<div class="input-row">';
-                    html += '<input type="number" step="0.1" id="weight-' + person + '" placeholder="Enter weight" onkeypress="if(event.key===\'Enter\') addWeight(\'' + person + '\')" />';
-                    html += '<button class="btn-add" onclick="addWeight(\'' + person + '\')">Add</button>';
-                    html += '</div>';
-                    html += '</div>';
+                    return badges;
+                }
 
-                    html += '<div class="input-group">';
-                    html += '<label>🎯 Goal Weight (lbs)</label>';
-                    html += '<div class="input-row">';
-                    html += '<input type="number" step="0.1" id="goal-' + person + '" placeholder="' + (goals[person] ? 'Current: ' + goals[person] : 'Set goal') + '" onkeypress="if(event.key===\'Enter\') setGoal(\'' + person + '\')" />';
-                    html += '<button class="btn-goal" onclick="setGoal(\'' + person + '\')">Set</button>';
-                    html += '</div>';
-                    if (goals[person]) {
-                        html += '<p class="stat-text">Goal: ' + goals[person] + ' lbs</p>';
+                function downloadCSV() {
+                    const entries = getAllEntries();
+                    let csv = 'Name,Weight (lbs),Timestamp\n';
+                    entries.forEach(entry => {
+                        csv += entry.person + ',' + entry.weight + ',' + formatTimestamp(entry.timestamp) + '\n';
+                    });
+                    
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'cherokee-chooters-weight-history-' + new Date().toISOString().split('T')[0] + '.csv';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }
+
+                window.downloadCSV = downloadCSV;
+
+                function getDailyQuote() {
+                    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+                    return inspirationalQuotes[dayOfYear % inspirationalQuotes.length];
+                }
+
+                window.postMessage = async function() {
+                    const personSelect = document.getElementById('messagePerson');
+                    const messageInput = document.getElementById('messageInput');
+                    
+                    const person = personSelect.value;
+                    const message = messageInput.value.trim();
+                    
+                    if (!message) {
+                        alert('Please enter a message');
+                        return;
                     }
-                    html += '</div>';
 
-                    // NEW: Progress bar toward goal
-                    if (progress !== null) {
-                        html += '<div class="progress-container">';
-                        html += '<div class="progress-label">';
-                        html += '<span>Progress to Goal</span>';
-                        html += '<span>' + progress.toFixed(0) + '%</span>';
-                        html += '</div>';
-                        html += '<div class="progress-bar">';
-                        html += '<div class="progress-fill" style="width: ' + progress + '%; background: ' + colors[person] + ';"></div>';
-                        html += '</div>';
-                        html += '</div>';
-                    }
-
-                    // NEW: Streak display
-                    if (streak > 0) {
-                        html += '<div class="streak-display' + (streak >= 7 ? ' hot' : '') + '">';
-                        html += '<span class="streak-fire">' + (streak >= 7 ? '🔥' : '📅') + '</span>';
-                        html += '<span><strong>' + streak + ' day' + (streak !== 1 ? 's' : '') + '</strong> logging streak!</span>';
-                        html += '</div>';
-                    }
-
-                    // NEW: Badges
-                    if (badges.length > 0) {
-                        html += '<div class="badges-container">';
-                        badges.forEach(badge => {
-                            html += '<span class="badge ' + badge.class + '">' + badge.icon + ' ' + badge.text + '</span>';
+                    try {
+                        await db.collection('messages').add({
+                            person: person,
+                            message: message,
+                            timestamp: Date.now()
                         });
-                        html += '</div>';
+                        messageInput.value = '';
+                    } catch (error) {
+                        console.error('Error posting message:', error);
+                        alert('Error posting message: ' + error.message);
+                    }
+                }
+
+                window.deleteMessage = async function(messageId) {
+                    if (!confirm('Delete this message?')) {
+                        return;
+                    }
+                    
+                    try {
+                        await db.collection('messages').doc(messageId).delete();
+                    } catch (error) {
+                        console.error('Error deleting message:', error);
+                        alert('Error deleting message: ' + error.message);
+                    }
+                }
+
+                function celebrate() {
+                    const container = document.createElement('div');
+                    container.className = 'confetti-container';
+                    document.body.appendChild(container);
+                    
+                    const confettiColors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff1493'];
+                    
+                    for (let i = 0; i < 150; i++) {
+                        setTimeout(() => {
+                            const confetti = document.createElement('div');
+                            confetti.className = 'confetti';
+                            confetti.style.left = Math.random() * 100 + '%';
+                            confetti.style.background = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+                            confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                            confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                            container.appendChild(confetti);
+                        }, i * 20);
+                    }
+                    setTimeout(() => {
+                        document.body.removeChild(container);
+                    }, 5000);
+                }
+
+                window.addRetroactiveWeight = async function() {
+                    const personSelect = document.getElementById('retroPerson');
+                    const weightInput = document.getElementById('retroWeight');
+                    const dateInput = document.getElementById('retroDate');
+                    const timeInput = document.getElementById('retroTime');
+                    
+                    const person = personSelect.value;
+                    const weight = parseFloat(weightInput.value);
+                    const date = dateInput.value;
+                    const time = timeInput.value;
+                    
+                    if (isNaN(weight) || weight <= 0) {
+                        alert('Please enter a valid weight');
+                        return;
+                    }
+                    
+                    if (!date) {
+                        alert('Please select a date');
+                        return;
+                    }
+                    
+                    if (!time) {
+                        alert('Please select a time');
+                        return;
+                    }
+                    
+                    const dateTimeString = date + 'T' + time;
+                    const timestamp = new Date(dateTimeString).getTime();
+                    
+                    if (isNaN(timestamp)) {
+                        alert('Invalid date/time combination');
+                        return;
                     }
 
-                    if (weights[person].length > 0) {
-                        html += '<div class="person-stats">';
-                        html += '<div class="stat-row">';
-                        html += '<div>';
-                        html += '<p class="stat-text">Latest: ' + weights[person][weights[person].length - 1].weight + ' lbs</p>';
-                        html += '<p class="stat-text">' + formatLastEntry(weights[person][weights[person].length - 1].timestamp) + '</p>';
-                        html += '<p class="stat-text">Total entries: ' + weights[person].length + '</p>';
-                        if (weights[person].length >= 2) {
-                            const loss = getWeightLoss(person);
-                            const lossPct = getWeightLossPercentage(person);
-                            html += '<p class="progress" style="color: ' + colors[person] + '">';
-                            html += (loss >= 0 ? '↓' : '↑') + ' ';
-                            html += Math.abs(loss).toFixed(1) + ' lbs ';
-                            html += '(' + (lossPct >= 0 ? '-' : '+') + Math.abs(lossPct).toFixed(1) + '%)';
-                            html += '</p>';
+                    try {
+                        await db.collection('weights').add({
+                            person: person,
+                            weight: weight,
+                            timestamp: timestamp
+                        });
+                        
+                        weightInput.value = '';
+                        dateInput.value = '';
+                        timeInput.value = '';
+                        
+                        alert('Retroactive weight entry added successfully!');
+                    } catch (error) {
+                        console.error('Error adding retroactive weight:', error);
+                        alert('Error adding weight: ' + error.message);
+                    }
+                }
+
+                function formatMessageTime(timestamp) {
+                    const date = new Date(timestamp);
+                    const now = new Date();
+                    const diffMs = now - date;
+                    const diffMins = Math.floor(diffMs / 60000);
+                    const diffHours = Math.floor(diffMs / 3600000);
+                    const diffDays = Math.floor(diffMs / 86400000);
+
+                    if (diffMins < 1) return 'Just now';
+                    if (diffMins < 60) return diffMins + 'm ago';
+                    if (diffHours < 24) return diffHours + 'h ago';
+                    if (diffDays < 7) return diffDays + 'd ago';
+                    return date.toLocaleDateString();
+                }
+
+                function updateChart() {
+                    const hasData = people.some(p => weights[p].length > 0);
+                    if (!hasData) return;
+
+                    const allTimestamps = new Set();
+                    people.forEach(person => {
+                        weights[person].forEach(entry => {
+                            allTimestamps.add(entry.timestamp);
+                        });
+                    });
+                    
+                    const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
+                    
+                    const labels = sortedTimestamps.map(ts => {
+                        const date = new Date(ts);
+                        const month = date.getMonth() + 1;
+                        const day = date.getDate();
+                        const hours = date.getHours();
+                        const minutes = date.getMinutes().toString().padStart(2, '0');
+                        return month + '/' + day + ' ' + hours + ':' + minutes;
+                    });
+
+                    const datasets = people.map(person => {
+                        const data = [];
+                        let lastWeight = null;
+
+                        sortedTimestamps.forEach(timestamp => {
+                            const entry = weights[person].find(w => w.timestamp === timestamp);
+                            if (entry) {
+                                lastWeight = entry.weight;
+                            }
+                            data.push(lastWeight);
+                        });
+
+                        return {
+                            label: person,
+                            data: data,
+                            borderColor: colors[person],
+                            backgroundColor: colors[person] + '33',
+                            borderWidth: 3,
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            tension: 0.1,
+                            spanGaps: false
+                        };
+                    }).filter(dataset => dataset.data.some(d => d !== null));
+
+                    people.forEach(person => {
+                        if (goals[person] && weights[person].length > 0) {
+                            const goalData = new Array(sortedTimestamps.length).fill(goals[person]);
+                            
+                            datasets.push({
+                                label: person + "'s Goal",
+                                data: goalData,
+                                borderColor: colors[person],
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                tension: 0,
+                                hidden: true
+                            });
+                        }
+                    });
+
+                    if (chart) {
+                        chart.destroy();
+                    }
+
+                    const ctx = document.getElementById('weightChart');
+                    if (!ctx) return;
+
+                    const isMobile = window.innerWidth < 768;
+
+                    chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: datasets
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: {
+                                mode: 'index',
+                                intersect: false,
+                            },
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: !isMobile,
+                                        text: 'Date & Time',
+                                        font: { size: isMobile ? 10 : 12 }
+                                    },
+                                    ticks: {
+                                        maxRotation: 45,
+                                        minRotation: 45,
+                                        font: { size: isMobile ? 9 : 10 },
+                                        autoSkip: true,
+                                        maxTicksLimit: isMobile ? 6 : 10
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: isMobile ? 'lbs' : 'Weight (lbs)',
+                                        font: { size: isMobile ? 10 : 12 }
+                                    },
+                                    ticks: { font: { size: isMobile ? 10 : 11 } }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                    labels: {
+                                        padding: isMobile ? 10 : 20,
+                                        font: { size: isMobile ? 11 : 12 },
+                                        usePointStyle: true,
+                                        boxWidth: isMobile ? 6 : 8,
+                                        filter: function(legendItem) {
+                                            return !legendItem.text.includes('Goal');
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    enabled: true,
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    padding: isMobile ? 8 : 12,
+                                    bodyFont: { size: isMobile ? 11 : 13 },
+                                    titleFont: { size: isMobile ? 12 : 14 },
+                                    callbacks: {
+                                        label: function(context) {
+                                            if (context.parsed.y === null) return null;
+                                            return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + ' lbs';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                window.setPortions = function(portions) {
+                    const recipe = getDailyRecipe();
+                    const ingredientsList = document.getElementById('ingredientsList');
+                    const buttons = document.querySelectorAll('.portion-btn');
+                    
+                    buttons.forEach((btn, index) => {
+                        btn.classList.toggle('active', index === portions - 1);
+                    });
+                    
+                    const ingredients = portions === 1 ? recipe.ingredients1 : recipe.ingredients2;
+                    ingredientsList.innerHTML = ingredients.map(ing => '<li>' + ing + '</li>').join('');
+                }
+
+                function render() {
+                    try {
+                        console.log('Rendering...');
+                        const hasData = people.some(p => weights[p].length > 0);
+                        const poundsLeader = getLeaderByPounds();
+                        const pctLeader = getLeaderByPercentage();
+                        const dailyRecipe = getDailyRecipe();
+
+                        let html = '<div class="container">';
+                        html += '<div class="header">';
+                        html += '<h1>⚖️ Cherokee Chooters Shred ⚖️</h1>';
+                        html += '<p class="subtitle">' + getDailyQuote() + '</p>';
+                        html += '</div>';
+
+                        html += '<div class="stats">';
+                        html += '<div class="stat-card cruise">';
+                        html += '<div class="stat-label">Days Until Cruise 🚢</div>';
+                        html += '<div class="stat-value">' + getDaysUntilCruise() + '</div>';
+                        html += '</div>';
+                        
+                        if (hasData) {
+                            html += '<div class="stat-card total">';
+                            html += '<div class="stat-label">Total Weight Lost Together</div>';
+                            html += '<div class="stat-value">' + getTotalWeightLoss().toFixed(1) + ' lbs</div>';
+                            html += '</div>';
                         }
                         html += '</div>';
-                        html += '<button class="btn-delete" onclick="deleteLastWeight(\'' + person + '\')">Delete Last</button>';
+
+                        if (hasData && poundsLeader) {
+                            html += '<div class="stats">';
+                            html += '<div class="stat-card leader">';
+                            html += '<div class="stat-label">🏆 Pounds Leader</div>';
+                            html += '<div class="stat-value">' + poundsLeader.name + '</div>';
+                            html += '<div class="stat-subtext">' + poundsLeader.loss.toFixed(1) + ' lbs lost</div>';
+                            html += '</div>';
+                            
+                            html += '<div class="stat-card leader-pct">';
+                            html += '<div class="stat-label">🏆 Percentage Leader</div>';
+                            html += '<div class="stat-value">' + pctLeader.name + '</div>';
+                            html += '<div class="stat-subtext">' + pctLeader.percentage.toFixed(1) + '% lost</div>';
+                            html += '</div>';
+                            html += '</div>';
+                        }
+
+                        html += '<div class="grid">';
+                        people.forEach(person => {
+                            const streak = getStreak(person);
+                            const progress = getGoalProgress(person);
+                            const badges = getBadges(person);
+                            
+                            html += '<div class="person-card">';
+                            html += '<h3 class="person-name" style="color: ' + colors[person] + '">';
+                            html += person;
+                            if (hasMetGoal(person)) {
+                                html += '<span class="goal-celebration">🎉🎊</span>';
+                            }
+                            html += '</h3>';
+                            
+                            html += '<div class="input-group">';
+                            html += '<label>Today\'s Weight (lbs)</label>';
+                            html += '<div class="input-row">';
+                            html += '<input type="number" step="0.1" id="weight-' + person + '" placeholder="Enter weight" onkeypress="if(event.key===\'Enter\') addWeight(\'' + person + '\')" />';
+                            html += '<button class="btn-add" onclick="addWeight(\'' + person + '\')">Add</button>';
+                            html += '</div>';
+                            html += '</div>';
+
+                            html += '<div class="input-group">';
+                            html += '<label>🎯 Goal Weight (lbs)</label>';
+                            html += '<div class="input-row">';
+                            html += '<input type="number" step="0.1" id="goal-' + person + '" placeholder="' + (goals[person] ? 'Current: ' + goals[person] : 'Set goal') + '" onkeypress="if(event.key===\'Enter\') setGoal(\'' + person + '\')" />';
+                            html += '<button class="btn-goal" onclick="setGoal(\'' + person + '\')">Set</button>';
+                            html += '</div>';
+                            if (goals[person]) {
+                                html += '<p class="stat-text">Goal: ' + goals[person] + ' lbs</p>';
+                            }
+                            html += '</div>';
+
+                            // NEW: Progress bar toward goal
+                            if (progress !== null) {
+                                html += '<div class="progress-container">';
+                                html += '<div class="progress-label">';
+                                html += '<span>Progress to Goal</span>';
+                                html += '<span>' + progress.toFixed(0) + '%</span>';
+                                html += '</div>';
+                                html += '<div class="progress-bar">';
+                                html += '<div class="progress-fill" style="width: ' + progress + '%; background: ' + colors[person] + ';"></div>';
+                                html += '</div>';
+                                html += '</div>';
+                            }
+
+                            // NEW: Streak display
+                            if (streak > 0) {
+                                html += '<div class="streak-display' + (streak >= 7 ? ' hot' : '') + '">';
+                                html += '<span class="streak-fire">' + (streak >= 7 ? '🔥' : '📅') + '</span>';
+                                html += '<span><strong>' + streak + ' day' + (streak !== 1 ? 's' : '') + '</strong> logging streak!</span>';
+                                html += '</div>';
+                            }
+
+                            // NEW: Badges
+                            if (badges.length > 0) {
+                                html += '<div class="badges-container">';
+                                badges.forEach(badge => {
+                                    html += '<span class="badge ' + badge.class + '">' + badge.icon + ' ' + badge.text + '</span>';
+                                });
+                                html += '</div>';
+                            }
+
+                            if (weights[person].length > 0) {
+                                html += '<div class="person-stats">';
+                                html += '<div class="stat-row">';
+                                html += '<div>';
+                                html += '<p class="stat-text">Latest: ' + weights[person][weights[person].length - 1].weight + ' lbs</p>';
+                                // NEW: Starting Weight added here
+                                if (weights[person].length > 0) {
+                                    html += '<p class="stat-text">Starting: ' + weights[person][0].weight + ' lbs</p>';
+                                }
+                                html += '<p class="stat-text">' + formatLastEntry(weights[person][weights[person].length - 1].timestamp) + '</p>';
+                                html += '<p class="stat-text">Total entries: ' + weights[person].length + '</p>';
+                                if (weights[person].length >= 2) {
+                                    const loss = getWeightLoss(person);
+                                    const lossPct = getWeightLossPercentage(person);
+                                    html += '<p class="progress" style="color: ' + colors[person] + '">';
+                                    html += (loss >= 0 ? '↓' : '↑') + ' ';
+                                    html += Math.abs(loss).toFixed(1) + ' lbs ';
+                                    html += '(' + (lossPct >= 0 ? '-' : '+') + Math.abs(lossPct).toFixed(1) + '%)';
+                                    html += '</p>';
+                                }
+                                html += '</div>';
+                                html += '<button class="btn-delete" onclick="deleteLastWeight(\'' + person + '\')">Delete Last</button>';
+                                html += '</div>';
+                                html += '</div>';
+                            }
+                            html += '</div>';
+                        });
+                        html += '</div>';
+
+                        if (hasData) {
+                            html += '<div class="chart-container">';
+                            html += '<h2 class="chart-title">Progress Chart</h2>';
+                            html += '<div class="chart-wrapper">';
+                            html += '<canvas id="weightChart"></canvas>';
+                            html += '</div>';
+                            html += '</div>';
+                        }
+
+                        if (hasData) {
+                            html += '<div class="table-container">';
+                            html += '<div class="table-title">';
+                            html += '<span>Weight Entry History</span>';
+                            html += '<button class="btn-download" onclick="downloadCSV()">📥 Download CSV</button>';
+                            html += '</div>';
+                            html += '<table>';
+                            html += '<thead><tr><th>Name</th><th>Weight</th><th>Timestamp</th></tr></thead>';
+                            html += '<tbody>';
+                            getAllEntries().forEach(entry => {
+                                html += '<tr>';
+                                html += '<td class="name-cell" style="color: ' + colors[entry.person] + '">' + entry.person + '</td>';
+                                html += '<td>' + entry.weight + ' lbs</td>';
+                                html += '<td>' + formatTimestamp(entry.timestamp) + '</td>';
+                                html += '</tr>';
+                            });
+                            html += '</tbody>';
+                            html += '</table>';
+                            html += '</div>';
+                        }
+                        
+                        // NEW: Message Board Section Restored
+                        html += '<div class="message-board">';
+                        html += '<h2 class="message-board-title">💬 Message Board</h2>';
+                        
+                        html += '<div class="message-input-area">';
+                        html += '<select id="messagePerson" class="message-select">';
+                        people.forEach(p => {
+                            html += '<option value="' + p + '">' + p + '</option>';
+                        });
+                        html += '</select>';
+                        html += '<input type="text" id="messageInput" class="message-input" placeholder="Type a message..." onkeypress="if(event.key===\'Enter\') postMessage()">';
+                        html += '<button class="btn-post" onclick="postMessage()">Post</button>';
+                        html += '</div>';
+
+                        html += '<div class="messages-list">';
+                        messages.forEach(msg => {
+                            html += '<div class="message-item">';
+                            html += '<div class="message-header">';
+                            html += '<span class="message-author" style="color: ' + colors[msg.person] + '">' + msg.person + '</span>';
+                            html += '<div>';
+                            html += '<span class="message-time">' + formatMessageTime(msg.timestamp) + '</span>';
+                            html += '<button class="btn-delete-message" onclick="deleteMessage(\'' + msg.id + '\')">×</button>';
+                            html += '</div>';
+                            html += '</div>';
+                            html += '<div class="message-text">' + msg.message + '</div>';
+                            html += '</div>';
+                        });
+                        if (messages.length === 0) {
+                            html += '<div style="text-align: center; color: #6b7280; padding: 1rem;">No messages yet. Be the first to post!</div>';
+                        }
                         html += '</div>';
                         html += '</div>';
+
+                        // FIXED: Reconstructed the Recipe section
+                        html += '<div class="recipe-container">';
+                        html += '<h2 class="recipe-title">Daily Healthy Recipe</h2>';
+                        html += '<h3 class="recipe-name">' + dailyRecipe.name + '</h3>';
+                        
+                        html += '<div class="recipe-section">';
+                        html += '<div class="recipe-section-title">Ingredients</div>';
+                        html += '<div class="portion-selector">';
+                        html += '<button class="portion-btn active" onclick="setPortions(1)">1 Portion</button>';
+                        html += '<button class="portion-btn" onclick="setPortions(2)">2 Portions</button>';
+                        html += '</div>';
+                        html += '<ul class="ingredients-list" id="ingredientsList">';
+                        dailyRecipe.ingredients1.forEach(ing => {
+                            html += '<li>' + ing + '</li>';
+                        });
+                        html += '</ul>';
+                        html += '</div>';
+
+                        html += '<div class="recipe-section">';
+                        html += '<div class="recipe-section-title">Instructions</div>';
+                        html += '<ol class="instructions-list">';
+                        dailyRecipe.instructions.forEach(step => {
+                            html += '<li>' + step + '</li>';
+                        });
+                        html += '</ol>';
+                        html += '</div>';
+
+                        html += '<div class="recipe-section">';
+                        html += '<div class="recipe-section-title">Nutrition (per serving)</div>';
+                        html += '<div class="macros-grid">';
+                        html += '<div class="macro-card"><div class="macro-label">Calories</div><div class="macro-value">' + dailyRecipe.macros.calories + '</div></div>';
+                        html += '<div class="macro-card"><div class="macro-label">Protein</div><div class="macro-value">' + dailyRecipe.macros.protein + '<span class="macro-unit">g</span></div></div>';
+                        html += '<div class="macro-card"><div class="macro-label">Carbs</div><div class="macro-value">' + dailyRecipe.macros.carbs + '<span class="macro-unit">g</span></div></div>';
+                        html += '<div class="macro-card"><div class="macro-label">Fat</div><div class="macro-value">' + dailyRecipe.macros.fat + '<span class="macro-unit">g</span></div></div>';
+                        html += '<div class="macro-card"><div class="macro-label">Fiber</div><div class="macro-value">' + dailyRecipe.macros.fiber + '<span class="macro-unit">g</span></div></div>';
+                        html += '</div>';
+                        html += '</div>';
+                        html += '</div>'; // End recipe-container
+
+                        html += '</div>'; // End main container
+                        
+                        document.getElementById('root').innerHTML = html;
+                        
+                        if (hasData) {
+                            setTimeout(updateChart, 100);
+                        }
+                    } catch (e) {
+                        console.error("Critical Render Error", e);
+                        document.getElementById('root').innerHTML = '<div class="error"><h2>Application Error</h2><p>' + e.message + '</p></div>';
                     }
-                    html += '</div>';
-                });
-                html += '</div>';
-
-                if (hasData) {
-                    html += '<div class="chart-container">';
-                    html += '<h2 class="chart-title">Progress Chart</h2>';
-                    html += '<div class="chart-wrapper">';
-                    html += '<canvas id="weightChart"></canvas>';
-                    html += '</div>';
-                    html += '</div>';
                 }
 
-                if (hasData) {
-                    html += '<div class="table-container">';
-                    html += '<div class="table-title">';
-                    html += '<span>Weight Entry History</span>';
-                    html += '<button class="btn-download" onclick="downloadCSV()">📥 Download CSV</button>';
-                    html += '</div>';
-                    html += '<table>';
-                    html += '<thead><tr><th>Name</th><th>Weight</th><th>Timestamp</th></tr></thead>';
-                    html += '<tbody>';
-                    getAllEntries().forEach(entry => {
-                        html += '<tr>';
-                        html += '<td class="name-cell" style="color: ' + colors[entry.person] + '">' + entry.person + '</td>';
-                        html += '<td>' + entry.weight + ' lbs</td>';
-                        html += '<td>' + formatTimestamp(entry.timestamp) + '</td>';
-                        html += '</tr>';
-                    });
-                    html += '</tbody>';
-                    html += '</table>';
-                    html += '</div>';
-                }
-
-                // FIXED: Reconstructed the Recipe section
-                html += '<div class="recipe-container">';
-                html += '<h2 class="recipe-title">Daily Healthy Recipe</h2>';
-                html += '<h3 class="recipe-name">' + dailyRecipe.name + '</h3>';
-                
-                html += '<div class="recipe-section">';
-                html += '<div class="recipe-section-title">Ingredients</div>';
-                html += '<div class="portion-selector">';
-                html += '<button class="portion-btn active" onclick="setPortions(1)">1 Portion</button>';
-                html += '<button class="portion-btn" onclick="setPortions(2)">2 Portions</button>';
-                html += '</div>';
-                html += '<ul class="ingredients-list" id="ingredientsList">';
-                dailyRecipe.ingredients1.forEach(ing => {
-                    html += '<li>' + ing + '</li>';
-                });
-                html += '</ul>';
-                html += '</div>';
-
-                html += '<div class="recipe-section">';
-                html += '<div class="recipe-section-title">Instructions</div>';
-                html += '<ol class="instructions-list">';
-                dailyRecipe.instructions.forEach(step => {
-                    html += '<li>' + step + '</li>';
-                });
-                html += '</ol>';
-                html += '</div>';
-
-                html += '<div class="recipe-section">';
-                html += '<div class="recipe-section-title">Nutrition (per serving)</div>';
-                html += '<div class="macros-grid">';
-                html += '<div class="macro-card"><div class="macro-label">Calories</div><div class="macro-value">' + dailyRecipe.macros.calories + '</div></div>';
-                html += '<div class="macro-card"><div class="macro-label">Protein</div><div class="macro-value">' + dailyRecipe.macros.protein + '<span class="macro-unit">g</span></div></div>';
-                html += '<div class="macro-card"><div class="macro-label">Carbs</div><div class="macro-value">' + dailyRecipe.macros.carbs + '<span class="macro-unit">g</span></div></div>';
-                html += '<div class="macro-card"><div class="macro-label">Fat</div><div class="macro-value">' + dailyRecipe.macros.fat + '<span class="macro-unit">g</span></div></div>';
-                html += '<div class="macro-card"><div class="macro-label">Fiber</div><div class="macro-value">' + dailyRecipe.macros.fiber + '<span class="macro-unit">g</span></div></div>';
-                html += '</div>';
-                html += '</div>';
-                html += '</div>'; // End recipe-container
-
-                html += '</div>'; // End main container
-                
-                document.getElementById('root').innerHTML = html;
-                
-                if (hasData) {
-                    setTimeout(updateChart, 100);
-                }
+                console.log('Setup complete!');
+            } catch (e) {
+                console.error("Critical Init Error", e);
+                document.getElementById('root').innerHTML = '<div class="error"><h2>Initialization Error</h2><p>' + e.message + '</p></div>';
             }
-
-            console.log('Setup complete!');
         }
     </script>
 </body>
