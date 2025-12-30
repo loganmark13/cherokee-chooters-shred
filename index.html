@@ -479,6 +479,46 @@
             line-height: 1.5;
         }
         
+        .btn-delete-message {
+            background: #ef4444;
+            color: white;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            margin-left: 0.5rem;
+        }
+        
+        .btn-delete-message:hover {
+            background: #dc2626;
+        }
+        
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #f0f;
+            animation: confetti-fall 3s linear forwards;
+        }
+        
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
         @media (max-width: 768px) {
             body {
                 padding: 1rem;
@@ -738,6 +778,10 @@
                     return;
                 }
 
+                // Check if goal achieved
+                const goalAchieved = goals[person] && weight <= goals[person] && 
+                    (weights[person].length === 0 || weights[person][weights[person].length - 1].weight > goals[person]);
+
                 try {
                     await db.collection('weights').add({
                         person: person,
@@ -745,6 +789,11 @@
                         timestamp: Date.now()
                     });
                     input.value = '';
+                    
+                    // Celebrate if goal achieved
+                    if (goalAchieved) {
+                        celebrate();
+                    }
                 } catch (error) {
                     console.error('Error adding weight:', error);
                     alert('Error saving weight: ' + error.message);
