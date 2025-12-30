@@ -391,6 +391,7 @@
             border-radius: 0.5rem;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             margin-top: 2rem;
+            margin-bottom: 2rem;
         }
         
         .retroactive-title {
@@ -1977,6 +1978,39 @@
                         html += '</div>';
 
                         // FIXED: Reconstructed the Recipe section
+                        html += '<div class="retroactive-entry">';
+                        html += '<h2 class="retroactive-title">🕒 Add Past Weight Entry</h2>';
+                        html += '<div class="retroactive-form">';
+                        
+                        html += '<div class="form-group">';
+                        html += '<label class="form-label">Person</label>';
+                        html += '<select id="retroPerson" class="form-input">';
+                        people.forEach(p => {
+                            html += '<option value="' + p + '">' + p + '</option>';
+                        });
+                        html += '</select>';
+                        html += '</div>';
+
+                        html += '<div class="form-group">';
+                        html += '<label class="form-label">Weight (lbs)</label>';
+                        html += '<input type="number" step="0.1" id="retroWeight" class="form-input" placeholder="0.0">';
+                        html += '</div>';
+
+                        html += '<div class="form-group">';
+                        html += '<label class="form-label">Date</label>';
+                        html += '<input type="date" id="retroDate" class="form-input">';
+                        html += '</div>';
+
+                        html += '<div class="form-group">';
+                        html += '<label class="form-label">Time</label>';
+                        html += '<input type="time" id="retroTime" class="form-input">';
+                        html += '</div>';
+
+                        html += '<button class="btn-add-retroactive" onclick="addRetroactiveWeight()">Add Entry</button>';
+                        
+                        html += '</div>'; // end form
+                        html += '</div>'; // end container
+
                         html += '<div class="recipe-container">';
                         html += '<h2 class="recipe-title">Daily Healthy Recipe</h2>';
                         html += '<h3 class="recipe-name">' + dailyRecipe.name + '</h3>';
