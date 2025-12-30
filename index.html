@@ -989,3 +989,510 @@
                 try {
                     await db.collection('messages').add({
                         person: person,
+message: message,
+                        timestamp: Date.now()
+                    });
+                    messageInput.value = '';
+                } catch (error) {
+                    console.error('Error posting message:', error);
+                    alert('Error posting message: ' + error.message);
+                }
+            }
+
+            window.deleteMessage = async function(messageId) {
+                if (!confirm('Delete this message?')) {
+                    return;
+                }
+                
+                try {
+                    await db.collection('messages').doc(messageId).delete();
+                } catch (error) {
+                    console.error('Error deleting message:', error);
+                    alert('Error deleting message: ' + error.message);
+                }
+            }
+
+            function celebrate() {
+                const container = document.createElement('div');
+                container.className = 'confetti-container';
+                document.body.appendChild(container);
+                
+                const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff1493'];
+                
+                for (let i = 0; i < 150; i++) {
+                    setTimeout(() => {
+                        const confetti = document.createElement('div');
+                        confetti.className = 'confetti';
+                        confetti.style.left = Math.random() * 100 + '%';
+                        confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                        confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                        confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                        container.appendChild(confetti);
+                    }, i * 20);
+                }
+                
+                const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjCM0fPTgjMGHm7A7+OZRQ0PVqzn77JrHgU9k9br1IMoBSd+zO/bklENEmS57OytYhsGO5HU8tWAMAcdcsLu45xHDhFmvOvqsGodBTuZ1/LSfS0HKoHO79+STAxBmuDyu2sqBS2H0fPTgDQGH27D8OSZSA8SY7bt7LFmHQU7k9Xv0n0sBSh/zO7Zk0sNEF+16OyzYiAHMYvT79N/LgYocsnr0n4tBSh/zPDdklENEl+16Oy0YSEGMIvT8M9+LgUpe8vt1H4tBSh/zPDbklENEl+06O2zYSEGMI3V79J/LgYpe8rt1IA');
+                audio.play().catch(e => console.log('Audio play failed:', e));
+                
+                setTimeout(() => {
+                    document.body.removeChild(container);
+                }, 5000);
+            }
+
+            window.addRetroactiveWeight = async function() {
+                const personSelect = document.getElementById('retroPerson');
+                const weightInput = document.getElementById('retroWeight');
+                const dateInput = document.getElementById('retroDate');
+                const timeInput = document.getElementById('retroTime');
+                
+                const person = personSelect.value;
+                const weight = parseFloat(weightInput.value);
+                const date = dateInput.value;
+                const time = timeInput.value;
+                
+                if (isNaN(weight) || weight <= 0) {
+                    alert('Please enter a valid weight');
+                    return;
+                }
+                
+                if (!date) {
+                    alert('Please select a date');
+                    return;
+                }
+                
+                if (!time) {
+                    alert('Please select a time');
+                    return;
+                }
+                
+                const dateTimeString = `${date}T${time}`;
+                const timestamp = new Date(dateTimeString).getTime();
+                
+                if (isNaN(timestamp)) {
+                    alert('Invalid date/time combination');
+                    return;
+                }
+
+                try {
+                    await db.collection('weights').add({
+                        person: person,
+                        weight: weight,
+                        timestamp: timestamp
+                    });
+                    
+                    weightInput.value = '';
+                    dateInput.value = '';
+                    timeInput.value = '';
+                    
+                    alert('Retroactive weight entry added successfully!');
+                } catch (error) {
+                    console.error('Error adding retroactive weight:', error);
+                    alert('Error adding weight: ' + error.message);
+                }
+            }
+
+            function formatMessageTime(timestamp) {
+                const date = new Date(timestamp);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMs / 3600000);
+                const diffDays = Math.floor(diffMs / 86400000);
+
+                if (diffMins < 1) return 'Just now';
+                if (diffMins < 60) return `${diffMins}m ago`;
+                if (diffHours < 24) return `${diffHours}h ago`;
+                if (diffDays < 7) return `${diffDays}d ago`;
+                return date.toLocaleDateString();
+            }
+
+            function updateChart() {
+                const hasData = people.some(p => weights[p].length > 0);
+                if (!hasData) return;
+
+                const allTimestamps = new Set();
+                people.forEach(person => {
+                    weights[person].forEach(entry => {
+                        allTimestamps.add(entry.timestamp);
+                    });
+                });
+                
+                const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
+                
+                const labels = sortedTimestamps.map(ts => {
+                    const date = new Date(ts);
+                    const month = date.getMonth() + 1;
+                    const day = date.getDate();
+                    const hours = date.getHours();
+                    const minutes = date.getMinutes().toString().padStart(2, '0');
+                    return `${month}/${day} ${hours}:${minutes}`;
+                });
+
+                const datasets = people.map(person => {
+                    const data = [];
+                    let lastWeight = null;
+
+                    sortedTimestamps.forEach(timestamp => {
+                        const entry = weights[person].find(w => w.timestamp === timestamp);
+                        if (entry) {
+                            lastWeight = entry.weight;
+                        }
+                        data.push(lastWeight);
+                    });
+
+                    return {
+                        label: person,
+                        data: data,
+                        borderColor: colors[person],
+                        backgroundColor: colors[person] + '33',
+                        borderWidth: 3,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        tension: 0.1,
+                        spanGaps: false
+                    };
+                }).filter(dataset => dataset.data.some(d => d !== null));
+
+                people.forEach(person => {
+                    if (goals[person] && weights[person].length > 0) {
+                        const goalData = new Array(sortedTimestamps.length).fill(goals[person]);
+                        
+                        datasets.push({
+                            label: `${person}'s Goal`,
+                            data: goalData,
+                            borderColor: colors[person],
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            tension: 0,
+                            hidden: true
+                        });
+                    }
+                });
+
+                if (chart) {
+                    chart.destroy();
+                }
+
+                const ctx = document.getElementById('weightChart');
+                if (!ctx) return;
+
+                const isMobile = window.innerWidth < 768;
+
+                chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: !isMobile,
+                                    text: 'Date & Time',
+                                    font: {
+                                        size: isMobile ? 10 : 12
+                                    }
+                                },
+                                ticks: {
+                                    maxRotation: isMobile ? 45 : 45,
+                                    minRotation: isMobile ? 45 : 45,
+                                    font: {
+                                        size: isMobile ? 9 : 10
+                                    },
+                                    autoSkip: true,
+                                    maxTicksLimit: isMobile ? 6 : 10
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: isMobile ? 'lbs' : 'Weight (lbs)',
+                                    font: {
+                                        size: isMobile ? 10 : 12
+                                    }
+                                },
+                                ticks: {
+                                    font: {
+                                        size: isMobile ? 10 : 11
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    padding: isMobile ? 10 : 20,
+                                    font: {
+                                        size: isMobile ? 11 : 12
+                                    },
+                                    usePointStyle: true,
+                                    boxWidth: isMobile ? 6 : 8,
+                                    filter: function(legendItem) {
+                                        return !legendItem.text.includes('Goal');
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                enabled: true,
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                padding: isMobile ? 8 : 12,
+                                bodyFont: {
+                                    size: isMobile ? 11 : 13
+                                },
+                                titleFont: {
+                                    size: isMobile ? 12 : 14
+                                },
+                                callbacks: {
+                                    label: function(context) {
+                                        if (context.parsed.y === null) return null;
+                                        return `${context.dataset.label}: ${context.parsed.y.toFixed(1)} lbs`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function render() {
+                console.log('Rendering...');
+                const hasData = people.some(p => weights[p].length > 0);
+                const poundsLeader = getLeaderByPounds();
+                const pctLeader = getLeaderByPercentage();
+
+                document.getElementById('root').innerHTML = `
+                    <div class="container">
+                        <div class="header">
+                            <h1>⚖️ Cherokee Chooters Shred ⚖️</h1>
+                            <p class="subtitle">${getDailyQuote()}</p>
+                        </div>
+
+                        <div class="stats">
+                            <div class="stat-card cruise">
+                                <div class="stat-label">Days Until Cruise 🚢</div>
+                                <div class="stat-value">${getDaysUntilCruise()}</div>
+                            </div>
+                            
+                            ${hasData ? `
+                                <div class="stat-card total">
+                                    <div class="stat-label">Total Weight Lost Together</div>
+                                    <div class="stat-value">${getTotalWeightLoss().toFixed(1)} lbs</div>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        ${hasData && poundsLeader ? `
+                            <div class="stats">
+                                <div class="stat-card leader">
+                                    <div class="stat-label">🏆 Pounds Leader</div>
+                                    <div class="stat-value">${poundsLeader.name}</div>
+                                    <div class="stat-subtext">${poundsLeader.loss.toFixed(1)} lbs lost</div>
+                                </div>
+                                
+                                <div class="stat-card leader-pct">
+                                    <div class="stat-label">🏆 Percentage Leader</div>
+                                    <div class="stat-value">${pctLeader.name}</div>
+                                    <div class="stat-subtext">${pctLeader.percentage.toFixed(1)}% lost</div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <div class="grid">
+                            ${people.map(person => `
+                                <div class="person-card">
+                                    <h3 class="person-name" style="color: ${colors[person]}">
+                                        ${person}
+                                        ${hasMetGoal(person) ? '<span class="goal-celebration">🎉🎊</span>' : ''}
+                                    </h3>
+                                    
+                                    <div class="input-group">
+                                        <label>Today's Weight (lbs)</label>
+                                        <div class="input-row">
+                                            <input 
+                                                type="number" 
+                                                step="0.1" 
+                                                id="weight-${person}"
+                                                placeholder="Enter weight"
+                                                onkeypress="if(event.key==='Enter') addWeight('${person}')"
+                                            />
+                                            <button class="btn-add" onclick="addWeight('${person}')">Add</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="input-group">
+                                        <label>🎯 Goal Weight (lbs)</label>
+                                        <div class="input-row">
+                                            <input 
+                                                type="number" 
+                                                step="0.1" 
+                                                id="goal-${person}"
+                                                placeholder="${goals[person] ? `Current: ${goals[person]}` : 'Set goal'}"
+                                                onkeypress="if(event.key==='Enter') setGoal('${person}')"
+                                            />
+                                            <button class="btn-goal" onclick="setGoal('${person}')">Set</button>
+                                        </div>
+                                        ${goals[person] ? `<p class="stat-text">Goal: ${goals[person]} lbs</p>` : ''}
+                                    </div>
+
+                                    ${weights[person].length > 0 ? `
+                                        <div class="person-stats">
+                                            <div class="stat-row">
+                                                <div>
+                                                    <p class="stat-text">Latest: ${weights[person][weights[person].length - 1].weight} lbs</p>
+                                                    <p class="stat-text">${formatLastEntry(weights[person][weights[person].length - 1].timestamp)}</p>
+                                                    <p class="stat-text">Total entries: ${weights[person].length}</p>
+                                                    ${weights[person].length >= 2 ? `
+                                                        <p class="progress" style="color: ${colors[person]}">
+                                                            ${getWeightLoss(person) >= 0 ? '↓' : '↑'} 
+                                                            ${Math.abs(getWeightLoss(person)).toFixed(1)} lbs
+                                                            (${getWeightLossPercentage(person) >= 0 ? '-' : '+'}${Math.abs(getWeightLossPercentage(person)).toFixed(1)}%)
+                                                        </p>
+                                                    ` : ''}
+                                                </div>
+                                                <button class="btn-delete" onclick="deleteLastWeight('${person}')">Delete Last</button>
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        ${hasData ? `
+                            <div class="chart-container">
+                                <h2 class="chart-title">Progress Chart</h2>
+                                <div class="chart-wrapper">
+                                    <canvas id="weightChart"></canvas>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${hasData ? `
+                            <div class="table-container">
+                                <div class="table-title">
+                                    <span>Weight Entry History</span>
+                                    <button class="btn-download" onclick="downloadCSV()">📥 Download CSV</button>
+                                </div>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Weight</th>
+                                            <th>Timestamp</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${getAllEntries().map(entry => `
+                                            <tr>
+                                                <td class="name-cell" style="color: ${colors[entry.person]}">${entry.person}</td>
+                                                <td>${entry.weight} lbs</td>
+                                                <td>${formatTimestamp(entry.timestamp)}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ` : ''}
+
+                        <div class="message-board">
+                            <h2 class="message-board-title">Message Board 💬</h2>
+                            
+                            <div class="message-input-area">
+                                <select id="messagePerson" class="message-select">
+                                    ${people.map(person => `<option value="${person}">${person}</option>`).join('')}
+                                </select>
+                                <input 
+                                    type="text" 
+                                    id="messageInput" 
+                                    class="message-input"
+                                    placeholder="Leave a message for the team..."
+                                    maxlength="200"
+                                    onkeypress="if(event.key==='Enter') postMessage()"
+                                />
+                                <button class="btn-post" onclick="postMessage()">Post</button>
+                            </div>
+
+                            <div class="messages-list">
+                                ${messages.length > 0 ? messages.map(msg => `
+                                    <div class="message-item">
+                                        <div class="message-header">
+                                            <span class="message-author" style="color: ${colors[msg.person]}">${msg.person}</span>
+                                            <div>
+                                                <span class="message-time">${formatMessageTime(msg.timestamp)}</span>
+                                                <button class="btn-delete-message" onclick="deleteMessage('${msg.id}')" title="Delete message">✕</button>
+                                            </div>
+                                        </div>
+                                        <div class="message-text">${msg.message}</div>
+                                    </div>
+                                `).join('') : '<p class="stat-text" style="text-align: center; padding: 2rem;">No messages yet. Be the first to post! 🎉</p>'}
+                            </div>
+                        </div>
+
+                        <div class="retroactive-entry">
+                            <h2 class="retroactive-title">Add Past Weight Entry 📝</h2>
+                            <p class="stat-text" style="margin-bottom: 1rem;">Missed logging a weight? Add it here with the correct date and time.</p>
+                            
+                            <div class="retroactive-form">
+                                <div class="form-group">
+                                    <label class="form-label">Name</label>
+                                    <select id="retroPerson" class="form-input">
+                                        ${people.map(person => `<option value="${person}">${person}</option>`).join('')}
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Weight (lbs)</label>
+                                    <input 
+                                        type="number" 
+                                        step="0.1" 
+                                        id="retroWeight" 
+                                        class="form-input"
+                                        placeholder="Enter weight"
+                                    />
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Date</label>
+                                    <input 
+                                        type="date" 
+                                        id="retroDate" 
+                                        class="form-input"
+                                    />
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Time</label>
+                                    <input 
+                                        type="time" 
+                                        id="retroTime" 
+                                        class="form-input"
+                                    />
+                                </div>
+                                
+                                <div class="form-group">
+                                    <button class="btn-add-retroactive" onclick="addRetroactiveWeight()">Add Entry</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                if (hasData) {
+                    setTimeout(updateChart, 100);
+                }
+            }
+
+            console.log('Setup complete!');
+        }
+    </script>
+</body>
+</html>
