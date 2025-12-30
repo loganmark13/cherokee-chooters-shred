@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cherokee Chooters Shred - Weight Tracker</title>
     
-    <!-- Firebase v8 -->
     <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     
     <style>
@@ -1930,11 +1928,34 @@
                     html += '</table>';
                     html += '</div>';
                 }
-yRecipe.instructions.forEach(step => {
+
+                // FIXED: Reconstructed the Recipe section
+                html += '<div class="recipe-container">';
+                html += '<h2 class="recipe-title">Daily Healthy Recipe</h2>';
+                html += '<h3 class="recipe-name">' + dailyRecipe.name + '</h3>';
+                
+                html += '<div class="recipe-section">';
+                html += '<div class="recipe-section-title">Ingredients</div>';
+                html += '<div class="portion-selector">';
+                html += '<button class="portion-btn active" onclick="setPortions(1)">1 Portion</button>';
+                html += '<button class="portion-btn" onclick="setPortions(2)">2 Portions</button>';
+                html += '</div>';
+                html += '<ul class="ingredients-list" id="ingredientsList">';
+                dailyRecipe.ingredients1.forEach(ing => {
+                    html += '<li>' + ing + '</li>';
+                });
+                html += '</ul>';
+                html += '</div>';
+
+                html += '<div class="recipe-section">';
+                html += '<div class="recipe-section-title">Instructions</div>';
+                html += '<ol class="instructions-list">';
+                dailyRecipe.instructions.forEach(step => {
                     html += '<li>' + step + '</li>';
                 });
                 html += '</ol>';
                 html += '</div>';
+
                 html += '<div class="recipe-section">';
                 html += '<div class="recipe-section-title">Nutrition (per serving)</div>';
                 html += '<div class="macros-grid">';
@@ -1945,9 +1966,9 @@ yRecipe.instructions.forEach(step => {
                 html += '<div class="macro-card"><div class="macro-label">Fiber</div><div class="macro-value">' + dailyRecipe.macros.fiber + '<span class="macro-unit">g</span></div></div>';
                 html += '</div>';
                 html += '</div>';
-                html += '</div>';
+                html += '</div>'; // End recipe-container
 
-                html += '</div>';
+                html += '</div>'; // End main container
                 
                 document.getElementById('root').innerHTML = html;
                 
