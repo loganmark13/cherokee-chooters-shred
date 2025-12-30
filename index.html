@@ -1030,10 +1030,6 @@ message: message,
                         container.appendChild(confetti);
                     }, i * 20);
                 }
-                
-                const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjCM0fPTgjMGHm7A7+OZRQ0PVqzn77JrHgU9k9br1IMoBSd+zO/bklENEmS57OytYhsGO5HU8tWAMAcdcsLu45xHDhFmvOvqsGodBTuZ1/LSfS0HKoHO79+STAxBmuDyu2sqBS2H0fPTgDQGH27D8OSZSA8SY7bt7LFmHQU7k9Xv0n0sBSh/zO7Zk0sNEF+16OyzYiAHMYvT79N/LgYocsnr0n4tBSh/zPDdklENEl+16Oy0YSEGMIvT8M9+LgUpe8vt1H4tBSh/zPDbklENEl+06O2zYSEGMI3V79J/LgYpe8rt1IA');
-                audio.play().catch(e => console.log('Audio play failed:', e));
-                
                 setTimeout(() => {
                     document.body.removeChild(container);
                 }, 5000);
