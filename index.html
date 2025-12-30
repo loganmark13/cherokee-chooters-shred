@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cherokee Chooters Shred 2026</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cherokee Chooters Shred - Weight Tracker</title>
     
     <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -11,169 +11,861 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     
     <style>
-        :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --bg: #f3f4f6;
-            --card-bg: #ffffff;
-            --text-main: #1f2937;
-            --text-muted: #6b7280;
-            --success: #10b981;
-            --danger: #ef4444;
-            --grid-gap: 16px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', sans-serif;
-            background-color: var(--bg);
-            color: var(--text-main);
-            padding: 1.5rem;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(to bottom right, #eff6ff, #e0e7ff);
             min-height: 100vh;
-        }
-
-        .container { max-width: 1200px; margin: 0 auto; padding-bottom: 4rem; }
-
-        /* --- HEADER --- */
-        .header { text-align: center; margin-bottom: 2rem; }
-        h1 { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.05em; margin-bottom: 0.5rem; background: linear-gradient(135deg, #4f46e5, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .quote-box { background: white; padding: 1rem; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: inline-block; max-width: 600px; margin: 0 auto; font-style: italic; color: var(--text-muted); }
-
-        /* --- BENTO GRID --- */
-        .bento-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-template-rows: auto auto;
-            gap: var(--grid-gap);
-            margin-bottom: 2rem;
-        }
-
-        .bento-card {
-            background: var(--card-bg);
-            border-radius: 24px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        
-        .card-cruise { grid-column: span 2; background: linear-gradient(135deg, #3b82f6, #06b6d4); color: white; }
-        .card-total  { grid-column: span 2; background: linear-gradient(135deg, #8b5cf6, #d946ef); color: white; }
-        .card-leader-lbs { grid-column: span 2; background:white; border-left: 5px solid #fbbf24; }
-        .card-leader-pct { grid-column: span 2; background:white; border-left: 5px solid #10b981; }
-
-        .bento-label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; margin-bottom: 0.5rem; font-weight: 600; }
-        .bento-value { font-size: 2.5rem; font-weight: 800; line-height: 1; }
-        .bento-sub   { font-size: 1rem; margin-top: 0.5rem; opacity: 0.9; }
-
-        /* --- NUMPAD LOGGING --- */
-        .logging-section {
-            background: white;
-            border-radius: 24px;
             padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            text-align: center;
         }
         
-        .section-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text-main); }
-
-        .person-selector { display: flex; gap: 10px; justify-content: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
-        .person-btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 50px;
-            border: 2px solid #e5e7eb;
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: #6b7280;
+            font-size: 1.1rem;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 2rem 0;
+        }
+        
+        .stat-card {
             background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            min-width: 200px;
+        }
+        
+        .stat-card.cruise {
+            background: linear-gradient(to right, #06b6d4, #2563eb);
+            color: white;
+        }
+        
+        .stat-card.total {
+            background: linear-gradient(to right, #6366f1, #a855f7);
+            color: white;
+        }
+        
+        .stat-card.leader {
+            background: linear-gradient(to right, #fbbf24, #f97316);
+            color: white;
+        }
+        
+        .stat-card.leader-pct {
+            background: linear-gradient(to right, #4ade80, #10b981);
+            color: white;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        
+        .stat-subtext {
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .person-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .person-name {
+            font-size: 1.5rem;
             font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        
+        .input-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        input, select {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
             font-size: 1rem;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
         }
-        .person-btn.selected { border-color: var(--primary); background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
-
-        .weight-display { font-size: 4rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.5rem; height: 80px; display: flex; align-items: center; justify-content: center; }
-        .weight-display.placeholder { color: #d1d5db; }
-        .cursor { animation: blink 1s infinite; color: var(--primary); }
-
-        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 400px; margin: 0 auto; }
-        .num-btn { background: #f9fafb; border: none; border-radius: 16px; padding: 1.25rem 0; font-size: 1.75rem; font-weight: 600; color: var(--text-main); cursor: pointer; transition: background 0.1s; box-shadow: 0 2px 0 #e5e7eb; }
-        .num-btn:active { background: #e5e7eb; transform: translateY(2px); box-shadow: none; }
-        .num-btn.submit { background: var(--success); color: white; grid-column: span 3; box-shadow: 0 2px 0 #059669; }
-        .num-btn.delete { background: #fee2e2; color: var(--danger); box-shadow: 0 2px 0 #fca5a5; }
-
-        /* --- CARDS & BADGES --- */
-        .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--grid-gap); margin-bottom: 2rem; }
-        .mini-card { background: white; padding: 1.5rem; border-radius: 16px; border-left: 5px solid transparent; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .mini-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-        .mini-name { font-size: 1.25rem; font-weight: 700; }
-        .mini-weight { font-size: 1.5rem; font-weight: 700; }
-        .badges-container { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
-        .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; background: #e5e7eb; font-weight: 600; }
-        .badge.gold { background: #fef3c7; color: #b45309; }
-        .badge.green { background: #dcfce7; color: #166534; }
-        .badge.blue { background: #dbeafe; color: #1e40af; }
-
-        /* --- CONTAINERS --- */
-        .chart-container, .table-container, .message-board, .recipe-container, .retroactive-container {
-            background: white; padding: 1.5rem; border-radius: 24px; margin-bottom: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-        }
-        .chart-wrapper { height: 400px; position: relative; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th { background: #f9fafb; padding: 12px; text-align: left; font-weight: 600; }
-        td { padding: 12px; border-bottom: 1px solid #e5e7eb; }
-        .btn-download { background: var(--success); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; float: right; font-weight: 600; }
-
-        /* --- MESSAGES --- */
-        .message-input-area { display: flex; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; }
-        .message-select { padding: 10px; border-radius: 8px; border: 1px solid #d1d5db; }
-        .message-input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #d1d5db; }
-        .btn-post { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-        .messages-list { max-height: 300px; overflow-y: auto; }
-        .message-item { padding: 10px; border-bottom: 1px solid #f3f4f6; }
-        .message-meta { font-size: 0.8rem; color: var(--text-muted); display: flex; justify-content: space-between; margin-bottom: 4px; }
-        .btn-del-msg { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1rem; }
-
-        /* --- RECIPES --- */
-        .recipe-name { font-size: 1.5rem; color: var(--primary); margin-bottom: 1rem; font-weight: 700; }
-        .portion-btn { border: 1px solid var(--primary); background: white; color: var(--primary); padding: 5px 15px; border-radius: 20px; cursor: pointer; margin-right: 5px; }
-        .portion-btn.active { background: var(--primary); color: white; }
-        .macros-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; margin-top: 1rem; text-align: center; }
-        .macro-card { background: #f9fafb; padding: 10px; border-radius: 12px; }
-
-        /* --- RETROACTIVE --- */
-        .retro-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; align-items: end; }
-        .form-label { font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; display: block; }
-        .retro-input { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; }
-
-        /* --- HEATMAP --- */
-        .heatmap-grid { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 10px; }
-        .heatmap-col { display: flex; flex-direction: column; gap: 4px; }
-        .day-cell { width: 12px; height: 12px; border-radius: 2px; background: #ebedf0; }
-        .level-1 { background: #9be9a8; } .level-2 { background: #40c463; } .level-3 { background: #30a14e; } .level-4 { background: #216e39; }
-
-        @media (max-width: 768px) {
-            .bento-grid { grid-template-columns: 1fr; }
-            .card-cruise, .card-total, .card-leader-lbs, .card-leader-pct { grid-column: span 1; }
-            h1 { font-size: 2rem; }
-            .weight-display { font-size: 3rem; }
+        .btn-add {
+            background: #6366f1;
+            color: white;
         }
-        @keyframes blink { 50% { opacity: 0; } }
+        
+        .btn-add:hover {
+            background: #4f46e5;
+        }
+        
+        .btn-goal {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-goal:hover {
+            background: #059669;
+        }
+        
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+            font-size: 0.875rem;
+            padding: 0.25rem 0.75rem;
+        }
+        
+        .btn-delete:hover {
+            background: #dc2626;
+        }
+        
+        .person-stats {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .stat-text {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .progress {
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 4rem;
+            font-size: 1.5rem;
+            color: #6b7280;
+        }
+        
+        .error {
+            text-align: center;
+            padding: 2rem;
+            color: #ef4444;
+            background: #fee;
+            border-radius: 0.5rem;
+            margin: 2rem;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .chart-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+        
+        .table-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+        
+        .table-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .btn-download {
+            background: #10b981;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+        
+        .btn-download:hover {
+            background: #059669;
+        }
+        
+        .goal-celebration {
+            display: inline-block;
+            margin-left: 0.5rem;
+            font-size: 1.5rem;
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: #f3f4f6;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        tr:hover {
+            background: #f9fafb;
+        }
+        
+        .name-cell {
+            font-weight: 600;
+        }
+        
+        .message-board {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .message-board-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        
+        .message-input-area {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .message-select {
+            padding: 0.5rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            background: white;
+            width: 120px;
+        }
+        
+        .message-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.5rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+        }
+        
+        .btn-post {
+            background: #6366f1;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-post:hover {
+            background: #4f46e5;
+        }
+        
+        .messages-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .retroactive-entry {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .retroactive-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        
+        .retroactive-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-input {
+            padding: 0.5rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+        }
+        
+        .btn-add-retroactive {
+            background: #8b5cf6;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            height: fit-content;
+        }
+        
+        .btn-add-retroactive:hover {
+            background: #7c3aed;
+        }
+        
+        .message-item {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            transition: background 0.2s;
+        }
+        
+        .message-item:hover {
+            background: #f9fafb;
+        }
+        
+        .message-item:last-child {
+            border-bottom: none;
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .message-author {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .message-time {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+        
+        .message-text {
+            color: #374151;
+            line-height: 1.5;
+        }
+        
+        .btn-delete-message {
+            background: #ef4444;
+            color: white;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            margin-left: 0.5rem;
+        }
+        
+        .btn-delete-message:hover {
+            background: #dc2626;
+        }
+        
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #f0f;
+            animation: confetti-fall 3s linear forwards;
+        }
+        
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        /* Progress Bar Styles */
+        .progress-container {
+            margin-top: 0.75rem;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-bottom: 0.25rem;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        /* Streak Styles */
+        .streak-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: #fef3c7;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+        
+        .streak-display.hot {
+            background: linear-gradient(to right, #fef3c7, #fde68a);
+        }
+        
+        .streak-fire {
+            font-size: 1.25rem;
+        }
+        
+        /* Badge Styles */
+        .badges-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .badge-first-entry {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        
+        .badge-5lbs {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .badge-10lbs {
+            background: #d1fae5;
+            color: #059669;
+        }
+        
+        .badge-15lbs {
+            background: #a7f3d0;
+            color: #047857;
+        }
+        
+        .badge-20lbs {
+            background: #6ee7b7;
+            color: #065f46;
+        }
+        
+        .badge-streak-7 {
+            background: #fef3c7;
+            color: #b45309;
+        }
+        
+        .badge-streak-14 {
+            background: #fde68a;
+            color: #a16207;
+        }
+        
+        .badge-streak-30 {
+            background: #fcd34d;
+            color: #92400e;
+        }
+        
+        .badge-halfway {
+            background: #e9d5ff;
+            color: #7e22ce;
+        }
+        
+        .badge-goal {
+            background: linear-gradient(to right, #fcd34d, #f59e0b);
+            color: #78350f;
+        }
+        
+        .badge-5pct {
+            background: #cffafe;
+            color: #0e7490;
+        }
+        
+        .badge-10pct {
+            background: #a5f3fc;
+            color: #0891b2;
+        }
+        
+        .recipe-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 2rem;
+        }
+        
+        .recipe-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        
+        .recipe-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #6366f1;
+            margin-bottom: 1rem;
+        }
+        
+        .portion-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .portion-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid #6366f1;
+            background: white;
+            color: #6366f1;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .portion-btn.active {
+            background: #6366f1;
+            color: white;
+        }
+        
+        .portion-btn:hover {
+            background: #6366f1;
+            color: white;
+        }
+        
+        .recipe-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .recipe-section-title {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+        }
+        
+        .ingredients-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .ingredients-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .ingredients-list li:before {
+            content: "• ";
+            color: #6366f1;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        
+        .instructions-list {
+            counter-reset: step-counter;
+            list-style: none;
+            padding: 0;
+        }
+        
+        .instructions-list li {
+            counter-increment: step-counter;
+            padding: 0.75rem 0;
+            padding-left: 2rem;
+            position: relative;
+        }
+        
+        .instructions-list li:before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            background: #6366f1;
+            color: white;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.875rem;
+        }
+        
+        .macros-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .macro-card {
+            background: #f9fafb;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            text-align: center;
+        }
+        
+        .macro-label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+        
+        .macro-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        
+        .macro-unit {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .stats {
+                flex-direction: column;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-wrapper {
+                height: 300px;
+            }
+            
+            .chart-title {
+                font-size: 1.25rem;
+            }
+            
+            .chart-container {
+                padding: 1rem;
+            }
+            
+            th, td {
+                padding: 0.5rem;
+                font-size: 0.875rem;
+            }
+            
+            .table-title {
+                font-size: 1.25rem;
+            }
+            
+            .message-board-title {
+                font-size: 1.25rem;
+            }
+            
+            .message-input-area {
+                flex-direction: column;
+            }
+            
+            .message-select, .message-input {
+                width: 100%;
+            }
+            
+            .retroactive-title {
+                font-size: 1.25rem;
+            }
+            
+            .retroactive-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .recipe-name {
+                font-size: 1.1rem;
+            }
+            
+            .recipe-section-title {
+                font-size: 1rem;
+            }
+            
+            .badges-container {
+                gap: 0.375rem;
+            }
+            
+            .badge {
+                font-size: 0.65rem;
+                padding: 0.2rem 0.4rem;
+            }
+        }
     </style>
 </head>
 <body>
     <div id="root">
-        <div class="loading" style="text-align: center; padding-top: 4rem;">
-            <div style="font-size: 3rem;">💪</div>
-            <p style="margin-top:1rem; color:#6b7280">Loading Tracker...</p>
-        </div>
+        <div class="loading">Loading Firebase...</div>
     </div>
 
     <script>
-        /* --- FULL DATA CONTENT --- */
-        const quotes = [
+        const inspirationalQuotes = [
             "The only bad workout is the one that didn't happen.",
             "Your body can stand almost anything. It's your mind you have to convince.",
             "Success is the sum of small efforts repeated day in and day out.",
@@ -245,412 +937,1137 @@
             "The pain of discipline weighs ounces. The pain of regret weighs tons.",
             "Whether you think you can or think you can't, you're right."
         ];
-
-        const recipes = [
-            { name: "Grilled Lemon Herb Chicken with Roasted Vegetables", ingredients1: ["6 oz chicken breast", "1 cup broccoli florets", "1 cup bell peppers", "1 tbsp olive oil", "1 lemon", "Fresh herbs (thyme, rosemary)", "Salt and pepper"], ingredients2: ["12 oz chicken breast", "2 cups broccoli florets", "2 cups bell peppers", "2 tbsp olive oil", "2 lemons", "Fresh herbs (thyme, rosemary)", "Salt and pepper"], instructions: ["Preheat oven to 400°F", "Season chicken with lemon juice, herbs, salt, and pepper", "Toss vegetables with olive oil and seasonings", "Place chicken and vegetables on baking sheet", "Roast for 25-30 minutes until chicken reaches 165°F", "Let rest 5 minutes before serving"], macros: {cal: 380, pro: 42, carb: 18, fat: 15} },
-            { name: "Baked Salmon with Quinoa and Asparagus", ingredients1: ["6 oz salmon fillet", "1/2 cup cooked quinoa", "1 cup asparagus", "1 tbsp olive oil", "1 lemon", "Garlic, dill", "Salt and pepper"], ingredients2: ["12 oz salmon fillet", "1 cup cooked quinoa", "2 cups asparagus", "2 tbsp olive oil", "2 lemons", "Garlic, dill", "Salt and pepper"], instructions: ["Preheat oven to 375°F", "Cook quinoa according to package directions", "Season salmon with lemon, dill, and garlic", "Toss asparagus with olive oil", "Bake salmon and asparagus for 15-18 minutes", "Serve salmon over quinoa with asparagus on the side"], macros: {cal: 420, pro: 38, carb: 28, fat: 18} },
-            { name: "Turkey and Vegetable Stir-Fry", ingredients1: ["6 oz ground turkey", "2 cups mixed vegetables", "1 tbsp soy sauce", "1 tsp sesame oil", "Garlic and ginger", "1/2 cup brown rice"], ingredients2: ["12 oz ground turkey", "4 cups mixed vegetables", "2 tbsp soy sauce", "2 tsp sesame oil", "Garlic and ginger", "1 cup brown rice"], instructions: ["Cook brown rice according to package directions", "Heat sesame oil in large pan over medium-high heat", "Cook turkey until browned, breaking into crumbles", "Add garlic and ginger, cook 1 minute", "Add vegetables and stir-fry 5-7 minutes", "Add soy sauce, toss to combine, serve over rice"], macros: {cal: 395, pro: 36, carb: 32, fat: 12} },
-            { name: "Mediterranean Chickpea Bowl", ingredients1: ["1 cup chickpeas", "1 cup cucumber", "1 cup tomatoes", "1/4 cup feta cheese", "2 tbsp hummus", "Mixed greens", "Lemon vinaigrette"], ingredients2: ["2 cups chickpeas", "2 cups cucumber", "2 cups tomatoes", "1/2 cup feta cheese", "4 tbsp hummus", "Mixed greens", "Lemon vinaigrette"], instructions: ["Drain and rinse chickpeas", "Chop cucumber and tomatoes into bite-sized pieces", "Arrange greens in bowl", "Top with chickpeas, cucumber, tomatoes", "Crumble feta on top", "Add dollop of hummus", "Drizzle with lemon vinaigrette"], macros: {cal: 410, pro: 18, carb: 52, fat: 14} },
-            { name: "Lean Beef Taco Bowl", ingredients1: ["6 oz lean ground beef", "1/2 cup black beans", "1/2 cup brown rice", "Lettuce, tomato, salsa", "2 tbsp Greek yogurt", "Taco seasoning"], ingredients2: ["12 oz lean ground beef", "1 cup black beans", "1 cup brown rice", "Lettuce, tomato, salsa", "4 tbsp Greek yogurt", "Taco seasoning"], instructions: ["Cook brown rice according to package", "Brown ground beef in pan", "Add taco seasoning and water, simmer", "Heat black beans", "Layer rice, beef, and beans in bowl", "Top with lettuce, tomato, salsa, and Greek yogurt"], macros: {cal: 445, pro: 40, carb: 38, fat: 13} },
-            { name: "Shrimp and Zucchini Noodles", ingredients1: ["8 oz shrimp", "2 medium zucchini spiralized", "1 cup cherry tomatoes", "2 cloves garlic", "1 tbsp olive oil", "Fresh basil", "Parmesan"], ingredients2: ["16 oz shrimp", "4 medium zucchini spiralized", "2 cups cherry tomatoes", "4 cloves garlic", "2 tbsp olive oil", "Fresh basil", "Parmesan"], instructions: ["Spiralize zucchini into noodles", "Heat olive oil in large pan", "Cook shrimp 2-3 minutes per side, remove", "Sauté garlic and tomatoes until soft", "Add zucchini noodles, cook 2-3 minutes", "Return shrimp to pan, toss with basil", "Top with parmesan"], macros: {cal: 285, pro: 34, carb: 14, fat: 11} },
-            { name: "Baked Cod with Sweet Potato and Green Beans", ingredients1: ["6 oz cod fillet", "1 medium sweet potato", "1.5 cups green beans", "1 tbsp olive oil", "Lemon, herbs", "Salt and pepper"], ingredients2: ["12 oz cod fillet", "2 medium sweet potatoes", "3 cups green beans", "2 tbsp olive oil", "Lemon, herbs", "Salt and pepper"], instructions: ["Preheat oven to 400°F", "Cube sweet potato and toss with oil", "Roast sweet potato for 15 minutes", "Season cod with lemon and herbs", "Add cod and green beans to pan", "Bake additional 12-15 minutes until cod flakes easily"], macros: {cal: 365, pro: 35, carb: 35, fat: 9} },
-            { name: "Greek Yogurt Chicken Salad Lettuce Wraps", ingredients1: ["6 oz cooked chicken breast, shredded", "1/4 cup Greek yogurt", "1 tbsp Dijon mustard", "1/4 cup diced celery", "2 tbsp diced red onion", "Butter lettuce leaves", "Salt, pepper, dill"], ingredients2: ["12 oz cooked chicken breast, shredded", "1/2 cup Greek yogurt", "2 tbsp Dijon mustard", "1/2 cup diced celery", "4 tbsp diced red onion", "Butter lettuce leaves", "Salt, pepper, dill"], instructions: ["Shred cooked chicken into bowl", "Mix Greek yogurt, mustard, and seasonings", "Fold in celery and red onion", "Season with salt, pepper, and dill", "Spoon mixture into lettuce cups", "Serve immediately"], macros: {cal: 295, pro: 44, carb: 8, fat: 9} },
-            { name: "Black Bean and Corn Stuffed Peppers", ingredients1: ["2 bell peppers", "1/2 cup black beans", "1/2 cup corn", "1/4 cup cooked quinoa", "1/4 cup salsa", "2 tbsp shredded cheese", "Cumin, chili powder"], ingredients2: ["4 bell peppers", "1 cup black beans", "1 cup corn", "1/2 cup cooked quinoa", "1/2 cup salsa", "4 tbsp shredded cheese", "Cumin, chili powder"], instructions: ["Preheat oven to 375°F", "Cut tops off peppers and remove seeds", "Mix beans, corn, quinoa, salsa, and spices", "Stuff peppers with mixture", "Top with shredded cheese", "Bake 25-30 minutes until peppers are tender"], macros: {cal: 320, pro: 14, carb: 52, fat: 7} },
-            { name: "Teriyaki Tofu with Cauliflower Rice", ingredients1: ["8 oz extra-firm tofu", "2 cups cauliflower rice", "1 cup snap peas", "2 tbsp low-sodium teriyaki sauce", "1 tsp sesame oil", "Green onions, sesame seeds"], ingredients2: ["16 oz extra-firm tofu", "4 cups cauliflower rice", "2 cups snap peas", "4 tbsp low-sodium teriyaki sauce", "2 tsp sesame oil", "Green onions, sesame seeds"], instructions: ["Press tofu and cut into cubes", "Heat sesame oil in pan over medium-high heat", "Cook tofu until golden on all sides", "Add teriyaki sauce and coat tofu", "Steam or sauté cauliflower rice separately", "Blanch snap peas until crisp-tender", "Serve tofu over cauliflower rice with snap peas"], macros: {cal: 275, pro: 22, carb: 18, fat: 14} },
-            { name: "Honey Garlic Pork Tenderloin with Roasted Brussels Sprouts", ingredients1: ["6 oz pork tenderloin", "1.5 cups Brussels sprouts", "1 tbsp honey", "2 cloves garlic, minced", "1 tbsp olive oil", "Salt, pepper, rosemary"], ingredients2: ["12 oz pork tenderloin", "3 cups Brussels sprouts", "2 tbsp honey", "4 cloves garlic, minced", "2 tbsp olive oil", "Salt, pepper, rosemary"], instructions: ["Preheat oven to 400°F", "Mix honey, garlic, and seasonings", "Rub mixture over pork tenderloin", "Halve Brussels sprouts and toss with oil", "Roast pork and sprouts for 20-25 minutes", "Let pork rest 5 minutes before slicing"], macros: {cal: 355, pro: 38, carb: 22, fat: 12} },
-            { name: "Egg White Veggie Scramble with Avocado Toast", ingredients1: ["4 egg whites", "1 cup spinach", "1/2 cup mushrooms", "1/4 cup diced tomatoes", "1 slice whole grain bread", "1/4 avocado", "Salt, pepper, herbs"], ingredients2: ["8 egg whites", "2 cups spinach", "1 cup mushrooms", "1/2 cup diced tomatoes", "2 slices whole grain bread", "1/2 avocado", "Salt, pepper, herbs"], instructions: ["Sauté mushrooms until golden", "Add spinach and tomatoes, cook until wilted", "Pour in egg whites, scramble until set", "Toast bread and top with mashed avocado", "Season scramble with salt, pepper, and herbs", "Serve scramble alongside avocado toast"], macros: {cal: 285, pro: 22, carb: 26, fat: 11} },
-            { name: "Thai Peanut Chicken Lettuce Wraps", ingredients1: ["6 oz ground chicken", "2 tbsp peanut butter", "1 tbsp soy sauce", "1 tsp sriracha", "1/2 cup shredded carrots", "Butter lettuce", "Cilantro, lime, peanuts"], ingredients2: ["12 oz ground chicken", "4 tbsp peanut butter", "2 tbsp soy sauce", "2 tsp sriracha", "1 cup shredded carrots", "Butter lettuce", "Cilantro, lime, peanuts"], instructions: ["Brown ground chicken in pan", "Mix peanut butter, soy sauce, and sriracha", "Add sauce to chicken and stir to coat", "Fold in shredded carrots", "Spoon into lettuce cups", "Top with cilantro, lime juice, and crushed peanuts"], macros: {cal: 365, pro: 36, carb: 14, fat: 19} },
-            { name: "Lemon Dill Tilapia with Cucumber Tomato Salad", ingredients1: ["6 oz tilapia fillet", "1 cup cucumber, diced", "1 cup cherry tomatoes, halved", "2 tbsp red onion", "1 tbsp olive oil", "Lemon, dill, feta"], ingredients2: ["12 oz tilapia fillet", "2 cups cucumber, diced", "2 cups cherry tomatoes, halved", "4 tbsp red onion", "2 tbsp olive oil", "Lemon, dill, feta"], instructions: ["Preheat oven to 400°F", "Season tilapia with lemon, dill, salt, and pepper", "Bake tilapia for 12-15 minutes", "Combine cucumber, tomatoes, and onion", "Dress salad with olive oil and lemon juice", "Serve tilapia with salad, topped with feta"], macros: {cal: 295, pro: 36, carb: 12, fat: 12} },
-            { name: "Mushroom and Spinach Turkey Meatballs", ingredients1: ["6 oz ground turkey", "1 cup spinach, chopped", "1/2 cup mushrooms, diced", "1 egg white", "2 tbsp breadcrumbs", "Marinara sauce", "Italian seasoning"], ingredients2: ["12 oz ground turkey", "2 cups spinach, chopped", "1 cup mushrooms, diced", "2 egg whites", "4 tbsp breadcrumbs", "Marinara sauce", "Italian seasoning"], instructions: ["Preheat oven to 400°F", "Sauté mushrooms and spinach until soft, cool slightly", "Mix turkey, vegetables, egg white, breadcrumbs, and seasonings", "Form into golf ball-sized meatballs", "Bake 18-20 minutes until cooked through", "Serve with warm marinara sauce"], macros: {cal: 310, pro: 38, carb: 16, fat: 10} },
-            { name: "Asian Sesame Tuna Poke Bowl", ingredients1: ["6 oz sushi-grade tuna, cubed", "1/2 cup brown rice", "1/2 cup edamame", "1/4 avocado", "2 tbsp low-sodium soy sauce", "Sesame oil, ginger, green onion"], ingredients2: ["12 oz sushi-grade tuna, cubed", "1 cup brown rice", "1 cup edamame", "1/2 avocado", "4 tbsp low-sodium soy sauce", "Sesame oil, ginger, green onion"], instructions: ["Cook brown rice according to package", "Marinate tuna in soy sauce, sesame oil, and ginger", "Cook edamame according to package", "Build bowl with rice as base", "Top with marinated tuna, edamame, and sliced avocado", "Garnish with green onion and sesame seeds"], macros: {cal: 425, pro: 42, carb: 36, fat: 13} },
-            { name: "Cajun Chicken with Cauliflower Mash", ingredients1: ["6 oz chicken breast", "2 cups cauliflower florets", "1 tbsp Greek yogurt", "1 tbsp olive oil", "Cajun seasoning", "Garlic, chives"], ingredients2: ["12 oz chicken breast", "4 cups cauliflower florets", "2 tbsp Greek yogurt", "2 tbsp olive oil", "Cajun seasoning", "Garlic, chives"], instructions: ["Season chicken generously with Cajun spices", "Grill or pan-sear chicken 6-7 minutes per side", "Steam cauliflower until very tender", "Blend cauliflower with yogurt and garlic until smooth", "Let chicken rest 5 minutes before slicing", "Serve sliced chicken over cauliflower mash with chives"], macros: {cal: 335, pro: 44, carb: 12, fat: 12} },
-            { name: "White Bean and Kale Soup with Turkey Sausage", ingredients1: ["3 oz turkey sausage, sliced", "1/2 cup white beans", "1.5 cups kale, chopped", "2 cups low-sodium chicken broth", "1/4 cup diced onion", "Garlic, Italian herbs"], ingredients2: ["6 oz turkey sausage, sliced", "1 cup white beans", "3 cups kale, chopped", "4 cups low-sodium chicken broth", "1/2 cup diced onion", "Garlic, Italian herbs"], instructions: ["Brown turkey sausage in pot, remove and set aside", "Sauté onion and garlic until soft", "Add broth, beans, and herbs, bring to simmer", "Add kale and cook until wilted", "Return sausage to pot", "Simmer 10 minutes to blend flavors"], macros: {cal: 295, pro: 24, carb: 28, fat: 10} },
-            { name: "Grilled Flank Steak with Chimichurri and Roasted Peppers", ingredients1: ["6 oz flank steak", "1 cup mixed bell peppers", "2 tbsp chimichurri sauce", "1 tbsp olive oil", "Salt and pepper"], ingredients2: ["12 oz flank steak", "2 cups mixed bell peppers", "4 tbsp chimichurri sauce", "2 tbsp olive oil", "Salt and pepper"], instructions: ["Season steak with salt and pepper", "Grill steak 4-5 minutes per side for medium", "Roast peppers at 425°F for 20 minutes", "Let steak rest 5 minutes before slicing against the grain", "Drizzle steak with chimichurri sauce", "Serve with roasted peppers"], macros: {cal: 375, pro: 40, carb: 10, fat: 18} },
-            { name: "Overnight Protein Oats with Berries", ingredients1: ["1/2 cup rolled oats", "1/2 cup Greek yogurt", "1/2 cup almond milk", "1 scoop protein powder", "1/2 cup mixed berries", "1 tbsp chia seeds", "Honey or stevia"], ingredients2: ["1 cup rolled oats", "1 cup Greek yogurt", "1 cup almond milk", "2 scoops protein powder", "1 cup mixed berries", "2 tbsp chia seeds", "Honey or stevia"], instructions: ["Combine oats, yogurt, milk, and protein powder in jar", "Stir in chia seeds", "Cover and refrigerate overnight (or at least 4 hours)", "In the morning, stir well", "Top with fresh berries", "Drizzle with honey or stevia if desired"], macros: {cal: 385, pro: 32, carb: 46, fat: 9} }
+        
+        const healthyRecipes = [
+            {
+                name: "Grilled Lemon Herb Chicken with Roasted Vegetables",
+                ingredients1: ["6 oz chicken breast", "1 cup broccoli florets", "1 cup bell peppers", "1 tbsp olive oil", "1 lemon", "Fresh herbs (thyme, rosemary)", "Salt and pepper"],
+                ingredients2: ["12 oz chicken breast", "2 cups broccoli florets", "2 cups bell peppers", "2 tbsp olive oil", "2 lemons", "Fresh herbs (thyme, rosemary)", "Salt and pepper"],
+                instructions: ["Preheat oven to 400°F", "Season chicken with lemon juice, herbs, salt, and pepper", "Toss vegetables with olive oil and seasonings", "Place chicken and vegetables on baking sheet", "Roast for 25-30 minutes until chicken reaches 165°F", "Let rest 5 minutes before serving"],
+                macros: {calories: 380, protein: 42, carbs: 18, fat: 15, fiber: 6}
+            },
+            {
+                name: "Baked Salmon with Quinoa and Asparagus",
+                ingredients1: ["6 oz salmon fillet", "1/2 cup cooked quinoa", "1 cup asparagus", "1 tbsp olive oil", "1 lemon", "Garlic, dill", "Salt and pepper"],
+                ingredients2: ["12 oz salmon fillet", "1 cup cooked quinoa", "2 cups asparagus", "2 tbsp olive oil", "2 lemons", "Garlic, dill", "Salt and pepper"],
+                instructions: ["Preheat oven to 375°F", "Cook quinoa according to package directions", "Season salmon with lemon, dill, and garlic", "Toss asparagus with olive oil", "Bake salmon and asparagus for 15-18 minutes", "Serve salmon over quinoa with asparagus on the side"],
+                macros: {calories: 420, protein: 38, carbs: 28, fat: 18, fiber: 5}
+            },
+            {
+                name: "Turkey and Vegetable Stir-Fry",
+                ingredients1: ["6 oz ground turkey", "2 cups mixed vegetables", "1 tbsp soy sauce", "1 tsp sesame oil", "Garlic and ginger", "1/2 cup brown rice"],
+                ingredients2: ["12 oz ground turkey", "4 cups mixed vegetables", "2 tbsp soy sauce", "2 tsp sesame oil", "Garlic and ginger", "1 cup brown rice"],
+                instructions: ["Cook brown rice according to package directions", "Heat sesame oil in large pan over medium-high heat", "Cook turkey until browned, breaking into crumbles", "Add garlic and ginger, cook 1 minute", "Add vegetables and stir-fry 5-7 minutes", "Add soy sauce, toss to combine, serve over rice"],
+                macros: {calories: 395, protein: 36, carbs: 32, fat: 12, fiber: 6}
+            },
+            {
+                name: "Mediterranean Chickpea Bowl",
+                ingredients1: ["1 cup chickpeas", "1 cup cucumber", "1 cup tomatoes", "1/4 cup feta cheese", "2 tbsp hummus", "Mixed greens", "Lemon vinaigrette"],
+                ingredients2: ["2 cups chickpeas", "2 cups cucumber", "2 cups tomatoes", "1/2 cup feta cheese", "4 tbsp hummus", "Mixed greens", "Lemon vinaigrette"],
+                instructions: ["Drain and rinse chickpeas", "Chop cucumber and tomatoes into bite-sized pieces", "Arrange greens in bowl", "Top with chickpeas, cucumber, tomatoes", "Crumble feta on top", "Add dollop of hummus", "Drizzle with lemon vinaigrette"],
+                macros: {calories: 410, protein: 18, carbs: 52, fat: 14, fiber: 12}
+            },
+            {
+                name: "Lean Beef Taco Bowl",
+                ingredients1: ["6 oz lean ground beef", "1/2 cup black beans", "1/2 cup brown rice", "Lettuce, tomato, salsa", "2 tbsp Greek yogurt", "Taco seasoning"],
+                ingredients2: ["12 oz lean ground beef", "1 cup black beans", "1 cup brown rice", "Lettuce, tomato, salsa", "4 tbsp Greek yogurt", "Taco seasoning"],
+                instructions: ["Cook brown rice according to package", "Brown ground beef in pan", "Add taco seasoning and water, simmer", "Heat black beans", "Layer rice, beef, and beans in bowl", "Top with lettuce, tomato, salsa, and Greek yogurt"],
+                macros: {calories: 445, protein: 40, carbs: 38, fat: 13, fiber: 8}
+            },
+            {
+                name: "Shrimp and Zucchini Noodles",
+                ingredients1: ["8 oz shrimp", "2 medium zucchini spiralized", "1 cup cherry tomatoes", "2 cloves garlic", "1 tbsp olive oil", "Fresh basil", "Parmesan"],
+                ingredients2: ["16 oz shrimp", "4 medium zucchini spiralized", "2 cups cherry tomatoes", "4 cloves garlic", "2 tbsp olive oil", "Fresh basil", "Parmesan"],
+                instructions: ["Spiralize zucchini into noodles", "Heat olive oil in large pan", "Cook shrimp 2-3 minutes per side, remove", "Sauté garlic and tomatoes until soft", "Add zucchini noodles, cook 2-3 minutes", "Return shrimp to pan, toss with basil", "Top with parmesan"],
+                macros: {calories: 285, protein: 34, carbs: 14, fat: 11, fiber: 4}
+            },
+            {
+                name: "Baked Cod with Sweet Potato and Green Beans",
+                ingredients1: ["6 oz cod fillet", "1 medium sweet potato", "1.5 cups green beans", "1 tbsp olive oil", "Lemon, herbs", "Salt and pepper"],
+                ingredients2: ["12 oz cod fillet", "2 medium sweet potatoes", "3 cups green beans", "2 tbsp olive oil", "Lemon, herbs", "Salt and pepper"],
+                instructions: ["Preheat oven to 400°F", "Cube sweet potato and toss with oil", "Roast sweet potato for 15 minutes", "Season cod with lemon and herbs", "Add cod and green beans to pan", "Bake additional 12-15 minutes until cod flakes easily"],
+                macros: {calories: 365, protein: 35, carbs: 35, fat: 9, fiber: 7}
+            },
+            {
+                name: "Greek Yogurt Chicken Salad Lettuce Wraps",
+                ingredients1: ["6 oz cooked chicken breast, shredded", "1/4 cup Greek yogurt", "1 tbsp Dijon mustard", "1/4 cup diced celery", "2 tbsp diced red onion", "Butter lettuce leaves", "Salt, pepper, dill"],
+                ingredients2: ["12 oz cooked chicken breast, shredded", "1/2 cup Greek yogurt", "2 tbsp Dijon mustard", "1/2 cup diced celery", "4 tbsp diced red onion", "Butter lettuce leaves", "Salt, pepper, dill"],
+                instructions: ["Shred cooked chicken into bowl", "Mix Greek yogurt, mustard, and seasonings", "Fold in celery and red onion", "Season with salt, pepper, and dill", "Spoon mixture into lettuce cups", "Serve immediately"],
+                macros: {calories: 295, protein: 44, carbs: 8, fat: 9, fiber: 2}
+            },
+            {
+                name: "Black Bean and Corn Stuffed Peppers",
+                ingredients1: ["2 bell peppers", "1/2 cup black beans", "1/2 cup corn", "1/4 cup cooked quinoa", "1/4 cup salsa", "2 tbsp shredded cheese", "Cumin, chili powder"],
+                ingredients2: ["4 bell peppers", "1 cup black beans", "1 cup corn", "1/2 cup cooked quinoa", "1/2 cup salsa", "4 tbsp shredded cheese", "Cumin, chili powder"],
+                instructions: ["Preheat oven to 375°F", "Cut tops off peppers and remove seeds", "Mix beans, corn, quinoa, salsa, and spices", "Stuff peppers with mixture", "Top with shredded cheese", "Bake 25-30 minutes until peppers are tender"],
+                macros: {calories: 320, protein: 14, carbs: 52, fat: 7, fiber: 12}
+            },
+            {
+                name: "Teriyaki Tofu with Cauliflower Rice",
+                ingredients1: ["8 oz extra-firm tofu", "2 cups cauliflower rice", "1 cup snap peas", "2 tbsp low-sodium teriyaki sauce", "1 tsp sesame oil", "Green onions, sesame seeds"],
+                ingredients2: ["16 oz extra-firm tofu", "4 cups cauliflower rice", "2 cups snap peas", "4 tbsp low-sodium teriyaki sauce", "2 tsp sesame oil", "Green onions, sesame seeds"],
+                instructions: ["Press tofu and cut into cubes", "Heat sesame oil in pan over medium-high heat", "Cook tofu until golden on all sides", "Add teriyaki sauce and coat tofu", "Steam or sauté cauliflower rice separately", "Blanch snap peas until crisp-tender", "Serve tofu over cauliflower rice with snap peas"],
+                macros: {calories: 275, protein: 22, carbs: 18, fat: 14, fiber: 5}
+            },
+            {
+                name: "Honey Garlic Pork Tenderloin with Roasted Brussels Sprouts",
+                ingredients1: ["6 oz pork tenderloin", "1.5 cups Brussels sprouts", "1 tbsp honey", "2 cloves garlic, minced", "1 tbsp olive oil", "Salt, pepper, rosemary"],
+                ingredients2: ["12 oz pork tenderloin", "3 cups Brussels sprouts", "2 tbsp honey", "4 cloves garlic, minced", "2 tbsp olive oil", "Salt, pepper, rosemary"],
+                instructions: ["Preheat oven to 400°F", "Mix honey, garlic, and seasonings", "Rub mixture over pork tenderloin", "Halve Brussels sprouts and toss with oil", "Roast pork and sprouts for 20-25 minutes", "Let pork rest 5 minutes before slicing"],
+                macros: {calories: 355, protein: 38, carbs: 22, fat: 12, fiber: 5}
+            },
+            {
+                name: "Egg White Veggie Scramble with Avocado Toast",
+                ingredients1: ["4 egg whites", "1 cup spinach", "1/2 cup mushrooms", "1/4 cup diced tomatoes", "1 slice whole grain bread", "1/4 avocado", "Salt, pepper, herbs"],
+                ingredients2: ["8 egg whites", "2 cups spinach", "1 cup mushrooms", "1/2 cup diced tomatoes", "2 slices whole grain bread", "1/2 avocado", "Salt, pepper, herbs"],
+                instructions: ["Sauté mushrooms until golden", "Add spinach and tomatoes, cook until wilted", "Pour in egg whites, scramble until set", "Toast bread and top with mashed avocado", "Season scramble with salt, pepper, and herbs", "Serve scramble alongside avocado toast"],
+                macros: {calories: 285, protein: 22, carbs: 26, fat: 11, fiber: 7}
+            },
+            {
+                name: "Thai Peanut Chicken Lettuce Wraps",
+                ingredients1: ["6 oz ground chicken", "2 tbsp peanut butter", "1 tbsp soy sauce", "1 tsp sriracha", "1/2 cup shredded carrots", "Butter lettuce", "Cilantro, lime, peanuts"],
+                ingredients2: ["12 oz ground chicken", "4 tbsp peanut butter", "2 tbsp soy sauce", "2 tsp sriracha", "1 cup shredded carrots", "Butter lettuce", "Cilantro, lime, peanuts"],
+                instructions: ["Brown ground chicken in pan", "Mix peanut butter, soy sauce, and sriracha", "Add sauce to chicken and stir to coat", "Fold in shredded carrots", "Spoon into lettuce cups", "Top with cilantro, lime juice, and crushed peanuts"],
+                macros: {calories: 365, protein: 36, carbs: 14, fat: 19, fiber: 3}
+            },
+            {
+                name: "Lemon Dill Tilapia with Cucumber Tomato Salad",
+                ingredients1: ["6 oz tilapia fillet", "1 cup cucumber, diced", "1 cup cherry tomatoes, halved", "2 tbsp red onion", "1 tbsp olive oil", "Lemon, dill, feta"],
+                ingredients2: ["12 oz tilapia fillet", "2 cups cucumber, diced", "2 cups cherry tomatoes, halved", "4 tbsp red onion", "2 tbsp olive oil", "Lemon, dill, feta"],
+                instructions: ["Preheat oven to 400°F", "Season tilapia with lemon, dill, salt, and pepper", "Bake tilapia for 12-15 minutes", "Combine cucumber, tomatoes, and onion", "Dress salad with olive oil and lemon juice", "Serve tilapia with salad, topped with feta"],
+                macros: {calories: 295, protein: 36, carbs: 12, fat: 12, fiber: 3}
+            },
+            {
+                name: "Mushroom and Spinach Turkey Meatballs",
+                ingredients1: ["6 oz ground turkey", "1 cup spinach, chopped", "1/2 cup mushrooms, diced", "1 egg white", "2 tbsp breadcrumbs", "Marinara sauce", "Italian seasoning"],
+                ingredients2: ["12 oz ground turkey", "2 cups spinach, chopped", "1 cup mushrooms, diced", "2 egg whites", "4 tbsp breadcrumbs", "Marinara sauce", "Italian seasoning"],
+                instructions: ["Preheat oven to 400°F", "Sauté mushrooms and spinach until soft, cool slightly", "Mix turkey, vegetables, egg white, breadcrumbs, and seasonings", "Form into golf ball-sized meatballs", "Bake 18-20 minutes until cooked through", "Serve with warm marinara sauce"],
+                macros: {calories: 310, protein: 38, carbs: 16, fat: 10, fiber: 3}
+            },
+            {
+                name: "Asian Sesame Tuna Poke Bowl",
+                ingredients1: ["6 oz sushi-grade tuna, cubed", "1/2 cup brown rice", "1/2 cup edamame", "1/4 avocado", "2 tbsp low-sodium soy sauce", "Sesame oil, ginger, green onion"],
+                ingredients2: ["12 oz sushi-grade tuna, cubed", "1 cup brown rice", "1 cup edamame", "1/2 avocado", "4 tbsp low-sodium soy sauce", "Sesame oil, ginger, green onion"],
+                instructions: ["Cook brown rice according to package", "Marinate tuna in soy sauce, sesame oil, and ginger", "Cook edamame according to package", "Build bowl with rice as base", "Top with marinated tuna, edamame, and sliced avocado", "Garnish with green onion and sesame seeds"],
+                macros: {calories: 425, protein: 42, carbs: 36, fat: 13, fiber: 6}
+            },
+            {
+                name: "Cajun Chicken with Cauliflower Mash",
+                ingredients1: ["6 oz chicken breast", "2 cups cauliflower florets", "1 tbsp Greek yogurt", "1 tbsp olive oil", "Cajun seasoning", "Garlic, chives"],
+                ingredients2: ["12 oz chicken breast", "4 cups cauliflower florets", "2 tbsp Greek yogurt", "2 tbsp olive oil", "Cajun seasoning", "Garlic, chives"],
+                instructions: ["Season chicken generously with Cajun spices", "Grill or pan-sear chicken 6-7 minutes per side", "Steam cauliflower until very tender", "Blend cauliflower with yogurt and garlic until smooth", "Let chicken rest 5 minutes before slicing", "Serve sliced chicken over cauliflower mash with chives"],
+                macros: {calories: 335, protein: 44, carbs: 12, fat: 12, fiber: 4}
+            },
+            {
+                name: "White Bean and Kale Soup with Turkey Sausage",
+                ingredients1: ["3 oz turkey sausage, sliced", "1/2 cup white beans", "1.5 cups kale, chopped", "2 cups low-sodium chicken broth", "1/4 cup diced onion", "Garlic, Italian herbs"],
+                ingredients2: ["6 oz turkey sausage, sliced", "1 cup white beans", "3 cups kale, chopped", "4 cups low-sodium chicken broth", "1/2 cup diced onion", "Garlic, Italian herbs"],
+                instructions: ["Brown turkey sausage in pot, remove and set aside", "Sauté onion and garlic until soft", "Add broth, beans, and herbs, bring to simmer", "Add kale and cook until wilted", "Return sausage to pot", "Simmer 10 minutes to blend flavors"],
+                macros: {calories: 295, protein: 24, carbs: 28, fat: 10, fiber: 7}
+            },
+            {
+                name: "Grilled Flank Steak with Chimichurri and Roasted Peppers",
+                ingredients1: ["6 oz flank steak", "1 cup mixed bell peppers", "2 tbsp chimichurri sauce", "1 tbsp olive oil", "Salt and pepper"],
+                ingredients2: ["12 oz flank steak", "2 cups mixed bell peppers", "4 tbsp chimichurri sauce", "2 tbsp olive oil", "Salt and pepper"],
+                instructions: ["Season steak with salt and pepper", "Grill steak 4-5 minutes per side for medium", "Roast peppers at 425°F for 20 minutes", "Let steak rest 5 minutes before slicing against the grain", "Drizzle steak with chimichurri sauce", "Serve with roasted peppers"],
+                macros: {calories: 375, protein: 40, carbs: 10, fat: 18, fiber: 3}
+            },
+            {
+                name: "Overnight Protein Oats with Berries",
+                ingredients1: ["1/2 cup rolled oats", "1/2 cup Greek yogurt", "1/2 cup almond milk", "1 scoop protein powder", "1/2 cup mixed berries", "1 tbsp chia seeds", "Honey or stevia"],
+                ingredients2: ["1 cup rolled oats", "1 cup Greek yogurt", "1 cup almond milk", "2 scoops protein powder", "1 cup mixed berries", "2 tbsp chia seeds", "Honey or stevia"],
+                instructions: ["Combine oats, yogurt, milk, and protein powder in jar", "Stir in chia seeds", "Cover and refrigerate overnight (or at least 4 hours)", "In the morning, stir well", "Top with fresh berries", "Drizzle with honey or stevia if desired"],
+                macros: {calories: 385, protein: 32, carbs: 46, fat: 9, fiber: 8}
+            }
         ];
-
-        /* --- APP LOGIC --- */
-        function initApp() {
-            const firebaseConfig = {
-                apiKey: "AIzaSyBpcOAWrr8hV2LQ2_mIUfIgvs05y2AYTRY",
-                authDomain: "cherokee-chooters-shred.firebaseapp.com",
-                projectId: "cherokee-chooters-shred",
-                storageBucket: "cherokee-chooters-shred.firebasestorage.app",
-                messagingSenderId: "448611335080",
-                appId: "1:448611335080:web:eb9eb0688d9b846e0cbb9d"
-            };
-
-            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-            const db = firebase.firestore();
-
-            // State
-            const people = ['Adam', 'Sean', 'Daniel', 'Mark'];
-            const colors = { Adam: '#3b82f6', Sean: '#ef4444', Daniel: '#10b981', Mark: '#f59e0b' };
-            let weights = { Adam: [], Sean: [], Daniel: [], Mark: [] };
-            let goals = { Adam: null, Sean: null, Daniel: null, Mark: null };
-            let messages = [];
-            
-            // UI State
-            let selectedPerson = null;
-            let currentInput = "";
-            let portionSize = 1;
-            let chartInstance = null;
-
-            // --- LISTENERS ---
-            db.collection('weights').onSnapshot(snap => {
-                weights = { Adam: [], Sean: [], Daniel: [], Mark: [] };
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    if(weights[d.person]) weights[d.person].push({ ...d, id: doc.id });
-                });
-                Object.keys(weights).forEach(k => weights[k].sort((a,b) => a.timestamp - b.timestamp));
-                render();
-            });
-
-            db.collection('goals').onSnapshot(snap => {
-                snap.forEach(doc => { goals[doc.data().person] = doc.data().goal; });
-                render();
-            });
-
-            db.collection('messages').orderBy('timestamp', 'desc').limit(50).onSnapshot(snap => {
-                messages = [];
-                snap.forEach(doc => messages.push({ ...doc.data(), id: doc.id }));
-                render();
-            });
-
-            // --- FUNCTIONS ---
-            
-            window.selectPerson = (name) => { selectedPerson = name; currentInput = ""; render(); }
-            window.numpadPress = (num) => {
-                if (!selectedPerson) return alert("Select a person first!");
-                if (currentInput.length > 5) return;
-                if (num === '.' && currentInput.includes('.')) return;
-                currentInput += num;
-                render();
-            }
-            window.numpadDelete = () => { currentInput = currentInput.slice(0, -1); render(); }
-            
-            window.submitWeight = async () => {
-                if (!selectedPerson || !currentInput) return;
-                const weight = parseFloat(currentInput);
-                await addWeightToDb(selectedPerson, weight, Date.now());
-                currentInput = ""; selectedPerson = null; celebrate(); render();
-            }
-
-            window.addRetroactiveWeight = async () => {
-                const p = document.getElementById('retroPerson').value;
-                const w = parseFloat(document.getElementById('retroWeight').value);
-                const d = document.getElementById('retroDate').value;
-                const t = document.getElementById('retroTime').value;
-                
-                if(!w || !d || !t) return alert("Fill all fields");
-                const ts = new Date(d + 'T' + t).getTime();
-                await addWeightToDb(p, w, ts);
-                alert("Retroactive entry added");
-                document.getElementById('retroWeight').value = '';
-            }
-
-            async function addWeightToDb(person, weight, timestamp) {
-                try {
-                    await db.collection('weights').add({ person, weight, timestamp });
-                } catch(e) { alert("Error: " + e.message); }
-            }
-
-            window.postMessage = async () => {
-                const p = document.getElementById('msgPerson').value;
-                const m = document.getElementById('msgInput').value;
-                if(!m) return;
-                await db.collection('messages').add({ person: p, message: m, timestamp: Date.now() });
-                document.getElementById('msgInput').value = '';
-            }
-
-            window.deleteMessage = async (id) => {
-                if(confirm('Delete message?')) await db.collection('messages').doc(id).delete();
-            }
-
-            window.setPortions = (n) => { portionSize = n; render(); }
-
-            window.downloadCSV = () => {
-                let csv = 'Name,Weight,Date\n';
-                Object.keys(weights).forEach(p => {
-                    weights[p].forEach(e => {
-                        csv += `${p},${e.weight},${new Date(e.timestamp).toLocaleString()}\n`;
-                    });
-                });
-                const blob = new Blob([csv], {type: 'text/csv'});
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a'); a.href = url; a.download = 'shred_data.csv';
-                a.click();
-            }
-
-            // --- HELPERS ---
-            const getLoss = p => { const w = weights[p]; return w.length > 1 ? w[0].weight - w[w.length-1].weight : 0; }
-            const getPct = p => { const w = weights[p]; return w.length > 1 ? ((w[0].weight - w[w.length-1].weight)/w[0].weight)*100 : 0; }
-            const getTotalLoss = () => people.reduce((a,p) => a + getLoss(p), 0);
-            const getStreak = p => {
-                const w = weights[p];
-                if(!w.length) return 0;
-                let streak = 0;
-                const today = new Date().setHours(0,0,0,0);
-                const dates = [...new Set(w.map(e => new Date(e.timestamp).setHours(0,0,0,0)))].sort((a,b)=>b-a);
-                if(dates[0] < today - 86400000) return 0; // Streak broken if no entry yesterday/today
-                for(let i=0; i<dates.length; i++) {
-                    if(i > 0 && dates[i-1] - dates[i] > 86400000) break;
-                    streak++;
-                }
-                return streak;
-            }
-
-            // --- RENDERER ---
-            function render() {
-                const totalLoss = getTotalLoss();
-                const daysLeft = Math.ceil((new Date('2026-02-27') - new Date()) / (86400000));
-                
-                // Leaders
-                let lLbs = {n:'-',v:-999}, lPct = {n:'-',v:-999};
-                people.forEach(p => {
-                    if(getLoss(p) > lLbs.v) lLbs = {n:p, v:getLoss(p)};
-                    if(getPct(p) > lPct.v) lPct = {n:p, v:getPct(p)};
-                });
-
-                let html = `<div class="container">`;
-                
-                // HEADER
-                html += `
-                    <div class="header">
-                        <h1>🔥 Cherokee Shred 🔥</h1>
-                        <div class="quote-box">"${quotes[Math.floor(Date.now()/86400000) % quotes.length]}"</div>
-                    </div>`;
-
-                // BENTO GRID
-                html += `
-                    <div class="bento-grid">
-                        <div class="bento-card card-cruise"><div class="bento-label">Countdown</div><div class="bento-value">${daysLeft}</div><div class="bento-sub">Days until Cruise</div></div>
-                        <div class="bento-card card-total"><div class="bento-label">Team Loss</div><div class="bento-value">${totalLoss.toFixed(1)}</div><div class="bento-sub">lbs destroyed</div></div>
-                        <div class="bento-card card-leader-lbs"><div class="bento-label" style="color:#b45309">👑 Lbs Leader</div><div class="bento-value" style="color:#b45309">${lLbs.n}</div><div class="bento-sub">${lLbs.v.toFixed(1)} lbs</div></div>
-                        <div class="bento-card card-leader-pct"><div class="bento-label" style="color:#166534">🚀 % Leader</div><div class="bento-value" style="color:#166534">${lPct.n}</div><div class="bento-sub">${lPct.v.toFixed(1)}%</div></div>
-                    </div>`;
-
-                // NUMPAD
-                html += `
-                    <div class="logging-section">
-                        <div class="section-title">Log Your Weight</div>
-                        <div class="person-selector">${people.map(p => `<button class="person-btn ${selectedPerson===p?'selected':''}" onclick="selectPerson('${p}')">${p}</button>`).join('')}</div>
-                        <div class="weight-display ${!currentInput?'placeholder':''}">${currentInput||'0.0'}<span class="cursor">|</span> lbs</div>
-                        <div class="numpad">
-                            ${[1,2,3,4,5,6,7,8,9].map(n=>`<button class="num-btn" onclick="numpadPress('${n}')">${n}</button>`).join('')}
-                            <button class="num-btn" onclick="numpadPress('.')">.</button>
-                            <button class="num-btn" onclick="numpadPress('0')">0</button>
-                            <button class="num-btn delete" onclick="numpadDelete()">⌫</button>
-                            <button class="num-btn submit" onclick="submitWeight()">LOG WEIGHT</button>
-                        </div>
-                    </div>`;
-
-                // CARDS
-                html += `<div class="status-grid">`;
-                people.forEach(p => {
-                    const w = weights[p];
-                    const cur = w.length ? w[w.length-1].weight : 0;
-                    const start = w.length ? w[0].weight : 0;
-                    const loss = start - cur;
-                    const streak = getStreak(p);
-                    
-                    html += `
-                        <div class="mini-card" style="border-left-color:${colors[p]}">
-                            <div class="mini-header"><span class="mini-name" style="color:${colors[p]}">${p}</span><span class="mini-weight">${cur||'--'} lbs</span></div>
-                            <div style="font-size:0.9rem; color:#6b7280; display:flex; justify-content:space-between">
-                                <span>Start: ${start}</span>
-                                <span style="color:${loss>0?colors.Daniel:colors.Sean}">${loss>0?'↓':'↑'} ${Math.abs(loss).toFixed(1)}</span>
-                            </div>
-                            <div class="badges-container">
-                                ${streak > 2 ? `<span class="badge gold">🔥 ${streak} Day Streak</span>` : ''}
-                                ${loss >= 5 ? `<span class="badge green">⭐ 5lb Club</span>` : ''}
-                                ${loss >= 10 ? `<span class="badge blue">🏆 10lb Club</span>` : ''}
-                            </div>
-                        </div>`;
-                });
-                html += `</div>`;
-
-                // CHART
-                html += `<div class="chart-container"><h2 class="section-title">Progress Trends</h2><div class="chart-wrapper"><canvas id="mainChart"></canvas></div></div>`;
-
-                // MESSAGES
-                html += `
-                    <div class="message-board">
-                        <h2 class="section-title">💬 Message Board</h2>
-                        <div class="message-input-area">
-                            <select id="msgPerson" class="message-select">${people.map(p=>`<option value="${p}">${p}</option>`).join('')}</select>
-                            <input id="msgInput" class="message-input" placeholder="Say something..." onkeypress="if(event.key==='Enter') postMessage()">
-                            <button class="btn-post" onclick="postMessage()">Post</button>
-                        </div>
-                        <div class="messages-list">
-                            ${messages.map(m => `
-                                <div class="message-item">
-                                    <div class="message-meta"><span style="font-weight:700; color:${colors[m.person]}">${m.person}</span><span>${new Date(m.timestamp).toLocaleDateString()} <button class="btn-del-msg" onclick="deleteMessage('${m.id}')">×</button></span></div>
-                                    <div>${m.message}</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>`;
-
-                // TABLE
-                html += `
-                    <div class="table-container">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem">
-                            <h2 class="section-title" style="margin:0">History</h2>
-                            <button class="btn-download" onclick="downloadCSV()">Download CSV</button>
-                        </div>
-                        <div style="max-height:300px; overflow-y:auto">
-                            <table>
-                                <thead><tr><th>Name</th><th>Weight</th><th>Date</th></tr></thead>
-                                <tbody>
-                                    ${Object.values(weights).flat().sort((a,b)=>b.timestamp-a.timestamp).map(e => `
-                                        <tr>
-                                            <td style="font-weight:600; color:${colors[e.person]}">${e.person}</td>
-                                            <td>${e.weight}</td>
-                                            <td>${new Date(e.timestamp).toLocaleString()}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>`;
-
-                // RETROACTIVE
-                html += `
-                    <div class="retroactive-container">
-                        <h2 class="section-title">🕒 Add Past Entry</h2>
-                        <div class="retro-form">
-                            <div><span class="form-label">Who</span><select id="retroPerson" class="retro-input">${people.map(p=>`<option value="${p}">${p}</option>`).join('')}</select></div>
-                            <div><span class="form-label">Weight</span><input id="retroWeight" type="number" class="retro-input" step="0.1"></div>
-                            <div><span class="form-label">Date</span><input id="retroDate" type="date" class="retro-input"></div>
-                            <div><span class="form-label">Time</span><input id="retroTime" type="time" class="retro-input"></div>
-                            <button class="btn-post" style="height:42px; background:#8b5cf6" onclick="addRetroactiveWeight()">Add</button>
-                        </div>
-                    </div>`;
-
-                // RECIPE
-                const dayRecipe = recipes[Math.floor(Date.now()/86400000) % recipes.length];
-                const ings = portionSize === 1 ? dayRecipe.ingredients1 : dayRecipe.ingredients2;
-                html += `
-                    <div class="recipe-container">
-                        <h2 class="section-title">🥗 Daily Recipe</h2>
-                        <div class="recipe-name">${dayRecipe.name}</div>
-                        <div style="margin-bottom:1rem">
-                            <button class="portion-btn ${portionSize===1?'active':''}" onclick="setPortions(1)">1 Serving</button>
-                            <button class="portion-btn ${portionSize===2?'active':''}" onclick="setPortions(2)">2 Servings</button>
-                        </div>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px">
-                            <ul>${ings.map(i=>`<li>• ${i}</li>`).join('')}</ul>
-                            <ol style="padding-left:20px">${dayRecipe.instructions.map(i=>`<li>${i}</li>`).join('')}</ol>
-                        </div>
-                        <div class="macros-grid">
-                            <div class="macro-card"><div>Cal</div><strong>${dayRecipe.macros.cal*portionSize}</strong></div>
-                            <div class="macro-card"><div>Pro</div><strong>${dayRecipe.macros.pro*portionSize}g</strong></div>
-                            <div class="macro-card"><div>Carb</div><strong>${dayRecipe.macros.carb*portionSize}g</strong></div>
-                            <div class="macro-card"><div>Fat</div><strong>${dayRecipe.macros.fat*portionSize}g</strong></div>
-                        </div>
-                    </div>`;
-
-                // HEATMAP
-                html += renderHeatmap();
-                html += `</div>`; // Close container
-
-                document.getElementById('root').innerHTML = html;
-                updateChart();
-            }
-
-            function updateChart() {
-                const ctx = document.getElementById('mainChart');
-                if(!ctx) return;
-                
-                // Collect all unique timestamps
-                const allTimes = new Set();
-                Object.values(weights).flat().forEach(e => allTimes.add(e.timestamp));
-                const labels = Array.from(allTimes).sort().map(t => new Date(t).toLocaleDateString());
-
-                const datasets = people.map(p => {
-                    // Create scatter-like data points that connect
-                    const data = weights[p].map(e => ({ x: new Date(e.timestamp).toLocaleDateString(), y: e.weight }));
-                    return {
-                        label: p,
-                        data: data,
-                        borderColor: colors[p],
-                        backgroundColor: colors[p],
-                        tension: 0.3,
-                        spanGaps: true
-                    };
-                });
-
-                if(chartInstance) chartInstance.destroy();
-                chartInstance = new Chart(ctx, {
-                    type: 'line',
-                    data: { labels: labels, datasets: datasets },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        interaction: { mode: 'index', intersect: false },
-                        plugins: { legend: { position: 'bottom' } }
-                    }
-                });
-            }
-
-            function renderHeatmap() {
-                // FIXED: Date Range Jan 1 2026 to Feb 26 2026
-                const startDate = new Date('2026-01-01T00:00:00');
-                const endDate = new Date('2026-02-26T23:59:59');
-                
-                // Set currentDay to previous Sunday for grid alignment
-                let currentDay = new Date(startDate);
-                while(currentDay.getDay() !== 0) currentDay.setDate(currentDay.getDate() - 1);
-
-                const activityMap = {};
-                Object.values(weights).flat().forEach(e => {
-                    const d = new Date(e.timestamp).toISOString().split('T')[0];
-                    activityMap[d] = (activityMap[d]||0) + 1;
-                });
-
-                let html = '<div class="chart-container"><h3 class="section-title">Consistency (Jan 1 - Feb 26)</h3><div class="heatmap-grid">';
-                
-                // Loop until we pass end date
-                while(currentDay <= endDate) {
-                    html += '<div class="heatmap-col">';
-                    for (let d = 0; d < 7; d++) {
-                        const dateStr = currentDay.toISOString().split('T')[0];
-                        
-                        // Check if day is within our target range
-                        if (currentDay >= startDate && currentDay <= endDate) {
-                            const count = activityMap[dateStr] || 0;
-                            html += `<div class="day-cell level-${Math.min(count, 4)}" title="${dateStr}: ${count}"></div>`;
-                        } else {
-                            // Transparent placeholder for alignment
-                            html += `<div class="day-cell" style="background:transparent"></div>`;
-                        }
-                        
-                        currentDay.setDate(currentDay.getDate() + 1);
-                    }
-                    html += '</div>';
-                }
-                html += '</div></div>';
-                return html;
-            }
-
-            function celebrate() {
-                const c = document.createElement('div');
-                c.style.position='fixed'; c.style.top='0'; c.style.left='0'; c.style.width='100%'; c.style.height='100%'; c.style.pointerEvents='none'; c.style.zIndex='999';
-                document.body.appendChild(c);
-                const colors = ['#f00','#0f0','#00f','#ff0','#0ff','#f0f'];
-                for(let i=0; i<100; i++) {
-                    const el=document.createElement('div'); el.style.position='absolute'; el.style.width='10px'; el.style.height='10px'; el.style.background=colors[Math.floor(Math.random()*6)];
-                    el.style.left=Math.random()*100+'%'; el.style.top='-10px'; el.style.transition='top 2s ease-out'; c.appendChild(el);
-                    setTimeout(()=>el.style.top='110%', 10);
-                }
-                setTimeout(()=>c.remove(), 2000);
+        
+        function getDailyRecipe() {
+            const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+            return healthyRecipes[dayOfYear % healthyRecipes.length];
+        }
+        
+        function checkFirebase() {
+            // FIXED: Now checks for both firebase AND firestore
+            if (typeof firebase !== 'undefined' && typeof firebase.firestore === 'function') {
+                console.log('Firebase and Firestore loaded!');
+                initApp();
+            } else {
+                console.log('Waiting for Firebase...');
+                setTimeout(checkFirebase, 100);
             }
         }
 
-        if (typeof firebase !== 'undefined') initApp();
-        else window.addEventListener('load', () => setTimeout(initApp, 500));
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', checkFirebase);
+        } else {
+            checkFirebase();
+        }
+
+        function initApp() {
+            try {
+                const firebaseConfig = {
+                    apiKey: "AIzaSyBpcOAWrr8hV2LQ2_mIUfIgvs05y2AYTRY",
+                    authDomain: "cherokee-chooters-shred.firebaseapp.com",
+                    projectId: "cherokee-chooters-shred",
+                    storageBucket: "cherokee-chooters-shred.firebasestorage.app",
+                    messagingSenderId: "448611335080",
+                    appId: "1:448611335080:web:eb9eb0688d9b846e0cbb9d"
+                };
+
+                console.log('Initializing Firebase...');
+                firebase.initializeApp(firebaseConfig);
+                const db = firebase.firestore();
+                console.log('Firebase initialized!');
+
+                const people = ['Adam', 'Sean', 'Daniel', 'Mark'];
+                const colors = {
+                    Adam: '#3b82f6',
+                    Sean: '#ef4444',
+                    Daniel: '#10b981',
+                    Mark: '#f59e0b'
+                };
+
+                let weights = { Adam: [], Sean: [], Daniel: [], Mark: [] };
+                let goals = { Adam: null, Sean: null, Daniel: null, Mark: null };
+                let loaded = false;
+                let chart = null;
+                let messages = [];
+
+                console.log('Setting up listeners...');
+                
+                db.collection('weights').onSnapshot((snapshot) => {
+                    console.log('Weights snapshot received, docs:', snapshot.size);
+                    weights = { Adam: [], Sean: [], Daniel: [], Mark: [] };
+                    
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        if (weights[data.person] !== undefined) {
+                            weights[data.person].push({
+                                id: doc.id,
+                                timestamp: data.timestamp,
+                                weight: data.weight
+                            });
+                        }
+                    });
+
+                    Object.keys(weights).forEach(person => {
+                        weights[person].sort((a, b) => a.timestamp - b.timestamp);
+                    });
+
+                    loaded = true;
+                    render();
+                }, (error) => {
+                    console.error('Error loading weights:', error);
+                    document.getElementById('root').innerHTML = '<div class="error"><h2>Error Loading Data</h2><p>' + error.message + '</p></div>';
+                });
+
+                db.collection('goals').onSnapshot((snapshot) => {
+                    console.log('Goals snapshot received, docs:', snapshot.size);
+                    goals = { Adam: null, Sean: null, Daniel: null, Mark: null };
+                    
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        goals[data.person] = data.goal;
+                    });
+
+                    if (loaded) render();
+                }, (error) => {
+                    console.error('Error loading goals:', error);
+                });
+
+                db.collection('messages').orderBy('timestamp', 'desc').limit(20).onSnapshot((snapshot) => {
+                    console.log('Messages snapshot received, docs:', snapshot.size);
+                    messages = [];
+                    
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        messages.push({
+                            id: doc.id,
+                            person: data.person,
+                            message: data.message,
+                            timestamp: data.timestamp
+                        });
+                    });
+
+                    if (loaded) render();
+                }, (error) => {
+                    console.error('Error loading messages:', error);
+                });
+
+                window.addWeight = async function(person) {
+                    const input = document.getElementById('weight-' + person);
+                    const weight = parseFloat(input.value);
+                    
+                    if (isNaN(weight) || weight <= 0) {
+                        alert('Please enter a valid weight');
+                        return;
+                    }
+
+                    const goalAchieved = goals[person] && weight <= goals[person] && 
+                        (weights[person].length === 0 || weights[person][weights[person].length - 1].weight > goals[person]);
+
+                    try {
+                        await db.collection('weights').add({
+                            person: person,
+                            weight: weight,
+                            timestamp: Date.now()
+                        });
+                        input.value = '';
+                        
+                        if (goalAchieved) {
+                            celebrate();
+                        }
+                    } catch (error) {
+                        console.error('Error adding weight:', error);
+                        alert('Error saving weight: ' + error.message);
+                    }
+                }
+
+                window.setGoal = async function(person) {
+                    const input = document.getElementById('goal-' + person);
+                    const goal = parseFloat(input.value);
+                    
+                    if (isNaN(goal) || goal <= 0) {
+                        alert('Please enter a valid goal');
+                        return;
+                    }
+
+                    try {
+                        const goalQuery = await db.collection('goals')
+                            .where('person', '==', person)
+                            .get();
+
+                        if (goalQuery.empty) {
+                            await db.collection('goals').add({
+                                person: person,
+                                goal: goal
+                            });
+                        } else {
+                            await db.collection('goals').doc(goalQuery.docs[0].id).update({
+                                goal: goal
+                            });
+                        }
+                        input.value = '';
+                    } catch (error) {
+                        console.error('Error setting goal:', error);
+                        alert('Error saving goal: ' + error.message);
+                    }
+                }
+
+                window.deleteLastWeight = async function(person) {
+                    if (weights[person].length === 0) return;
+                    
+                    const lastEntry = weights[person][weights[person].length - 1];
+                    
+                    if (!confirm('Delete last weight entry (' + lastEntry.weight + ' lbs)?')) {
+                        return;
+                    }
+                    
+                    try {
+                        await db.collection('weights').doc(lastEntry.id).delete();
+                    } catch (error) {
+                        console.error('Error deleting weight:', error);
+                        alert('Error deleting weight: ' + error.message);
+                    }
+                }
+
+                function getWeightLoss(person) {
+                    if (weights[person].length < 2) return 0;
+                    return weights[person][0].weight - weights[person][weights[person].length - 1].weight;
+                }
+
+                function getWeightLossPercentage(person) {
+                    if (weights[person].length < 2) return 0;
+                    const loss = getWeightLoss(person);
+                    return (loss / weights[person][0].weight) * 100;
+                }
+
+                function getTotalWeightLoss() {
+                    return people.reduce((total, person) => total + getWeightLoss(person), 0);
+                }
+
+                function getDaysUntilCruise() {
+                    const cruiseDate = new Date('2026-02-27');
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    cruiseDate.setHours(0, 0, 0, 0);
+                    return Math.ceil((cruiseDate - today) / (1000 * 60 * 60 * 24));
+                }
+
+                function getLeaderByPounds() {
+                    let leader = null;
+                    let maxLoss = 0;
+                    
+                    people.forEach(person => {
+                        const loss = getWeightLoss(person);
+                        if (loss > maxLoss) {
+                            maxLoss = loss;
+                            leader = person;
+                        }
+                    });
+                    
+                    return leader ? { name: leader, loss: maxLoss } : null;
+                }
+
+                function getLeaderByPercentage() {
+                    let leader = null;
+                    let maxPercentage = 0;
+                    
+                    people.forEach(person => {
+                        const percentage = getWeightLossPercentage(person);
+                        if (percentage > maxPercentage) {
+                            maxPercentage = percentage;
+                            leader = person;
+                        }
+                    });
+                    
+                    return leader ? { name: leader, percentage: maxPercentage } : null;
+                }
+
+                function formatLastEntry(timestamp) {
+                    const date = new Date(timestamp);
+                    const today = new Date();
+                    const dateStr = date.toLocaleDateString();
+                    const todayStr = today.toLocaleDateString();
+                    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                    if (dateStr === todayStr) {
+                        return 'Today at ' + timeStr;
+                    }
+                    return date.toLocaleDateString() + ' at ' + timeStr;
+                }
+
+                function getAllEntries() {
+                    const allEntries = [];
+                    people.forEach(person => {
+                        weights[person].forEach(entry => {
+                            allEntries.push({
+                                person: person,
+                                weight: entry.weight,
+                                timestamp: entry.timestamp
+                            });
+                        });
+                    });
+                    allEntries.sort((a, b) => b.timestamp - a.timestamp);
+                    return allEntries;
+                }
+
+                function formatTimestamp(timestamp) {
+                    const date = new Date(timestamp);
+                    const dateStr = date.toLocaleDateString();
+                    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    return dateStr + ' ' + timeStr;
+                }
+
+                function hasMetGoal(person) {
+                    if (!goals[person] || weights[person].length === 0) return false;
+                    const currentWeight = weights[person][weights[person].length - 1].weight;
+                    return currentWeight <= goals[person];
+                }
+
+                // NEW: Calculate streak (consecutive days with weigh-ins)
+                function getStreak(person) {
+                    if (weights[person].length === 0) return 0;
+                    
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    
+                    // Get unique days with entries (sorted newest first)
+                    const entryDays = [];
+                    weights[person].forEach(entry => {
+                        try {
+                            const entryDate = new Date(entry.timestamp);
+                            if (isNaN(entryDate.getTime())) return; // skip invalid dates
+                            
+                            entryDate.setHours(0, 0, 0, 0);
+                            const dateStr = entryDate.toISOString().split('T')[0];
+                            if (!entryDays.includes(dateStr)) {
+                                entryDays.push(dateStr);
+                            }
+                        } catch(e) {
+                            console.error('Error parsing date in streak calculation', e);
+                        }
+                    });
+                    entryDays.sort().reverse();
+                    
+                    // Check if most recent entry is today or yesterday
+                    const mostRecentDate = new Date(entryDays[0]);
+                    const diffDays = Math.floor((today - mostRecentDate) / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays > 1) return 0; // Streak broken
+                    
+                    let streak = 1;
+                    for (let i = 1; i < entryDays.length; i++) {
+                        const prevDate = new Date(entryDays[i - 1]);
+                        const currDate = new Date(entryDays[i]);
+                        const dayDiff = Math.floor((prevDate - currDate) / (1000 * 60 * 60 * 24));
+                        
+                        if (dayDiff === 1) {
+                            streak++;
+                        } else {
+                            break;
+                        }
+                    }
+                    
+                    return streak;
+                }
+
+                // NEW: Get progress toward goal (percentage)
+                function getGoalProgress(person) {
+                    if (!goals[person] || weights[person].length === 0) return null;
+                    
+                    const startWeight = weights[person][0].weight;
+                    const currentWeight = weights[person][weights[person].length - 1].weight;
+                    const goalWeight = goals[person];
+                    
+                    const totalToLose = startWeight - goalWeight;
+                    if (totalToLose <= 0) return 100;
+                    
+                    const lost = startWeight - currentWeight;
+                    const progress = (lost / totalToLose) * 100;
+                    
+                    return Math.min(Math.max(progress, 0), 100);
+                }
+
+                // NEW: Get badges for a person
+                function getBadges(person) {
+                    const badges = [];
+                    const loss = getWeightLoss(person);
+                    const lossPct = getWeightLossPercentage(person);
+                    const streak = getStreak(person);
+                    const progress = getGoalProgress(person);
+                    
+                    // First entry badge
+                    if (weights[person].length >= 1) {
+                        badges.push({ class: 'badge-first-entry', icon: '🎯', text: 'Started!' });
+                    }
+                    
+                    // Weight loss milestones
+                    if (loss >= 5) badges.push({ class: 'badge-5lbs', icon: '⭐', text: '5 lbs lost' });
+                    if (loss >= 10) badges.push({ class: 'badge-10lbs', icon: '🌟', text: '10 lbs lost' });
+                    if (loss >= 15) badges.push({ class: 'badge-15lbs', icon: '💫', text: '15 lbs lost' });
+                    if (loss >= 20) badges.push({ class: 'badge-20lbs', icon: '🏆', text: '20 lbs lost' });
+                    
+                    // Percentage milestones
+                    if (lossPct >= 5) badges.push({ class: 'badge-5pct', icon: '📉', text: '5% down' });
+                    if (lossPct >= 10) badges.push({ class: 'badge-10pct', icon: '📊', text: '10% down' });
+                    
+                    // Streak badges
+                    if (streak >= 7) badges.push({ class: 'badge-streak-7', icon: '🔥', text: '7 day streak' });
+                    if (streak >= 14) badges.push({ class: 'badge-streak-14', icon: '🔥', text: '14 day streak' });
+                    if (streak >= 30) badges.push({ class: 'badge-streak-30', icon: '💪', text: '30 day streak' });
+                    
+                    // Progress badges
+                    if (progress !== null && progress >= 50 && progress < 100) {
+                        badges.push({ class: 'badge-halfway', icon: '🎯', text: 'Halfway there!' });
+                    }
+                    
+                    // Goal achieved
+                    if (hasMetGoal(person)) {
+                        badges.push({ class: 'badge-goal', icon: '👑', text: 'Goal Achieved!' });
+                    }
+                    
+                    return badges;
+                }
+
+                function downloadCSV() {
+                    const entries = getAllEntries();
+                    let csv = 'Name,Weight (lbs),Timestamp\n';
+                    entries.forEach(entry => {
+                        csv += entry.person + ',' + entry.weight + ',' + formatTimestamp(entry.timestamp) + '\n';
+                    });
+                    
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'cherokee-chooters-weight-history-' + new Date().toISOString().split('T')[0] + '.csv';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }
+
+                window.downloadCSV = downloadCSV;
+
+                function getDailyQuote() {
+                    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+                    return inspirationalQuotes[dayOfYear % inspirationalQuotes.length];
+                }
+
+                window.postMessage = async function() {
+                    const personSelect = document.getElementById('messagePerson');
+                    const messageInput = document.getElementById('messageInput');
+                    
+                    const person = personSelect.value;
+                    const message = messageInput.value.trim();
+                    
+                    if (!message) {
+                        alert('Please enter a message');
+                        return;
+                    }
+
+                    try {
+                        await db.collection('messages').add({
+                            person: person,
+                            message: message,
+                            timestamp: Date.now()
+                        });
+                        messageInput.value = '';
+                    } catch (error) {
+                        console.error('Error posting message:', error);
+                        alert('Error posting message: ' + error.message);
+                    }
+                }
+
+                window.deleteMessage = async function(messageId) {
+                    if (!confirm('Delete this message?')) {
+                        return;
+                    }
+                    
+                    try {
+                        await db.collection('messages').doc(messageId).delete();
+                    } catch (error) {
+                        console.error('Error deleting message:', error);
+                        alert('Error deleting message: ' + error.message);
+                    }
+                }
+
+                function celebrate() {
+                    const container = document.createElement('div');
+                    container.className = 'confetti-container';
+                    document.body.appendChild(container);
+                    
+                    const confettiColors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff1493'];
+                    
+                    for (let i = 0; i < 150; i++) {
+                        setTimeout(() => {
+                            const confetti = document.createElement('div');
+                            confetti.className = 'confetti';
+                            confetti.style.left = Math.random() * 100 + '%';
+                            confetti.style.background = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+                            confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                            confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                            container.appendChild(confetti);
+                        }, i * 20);
+                    }
+                    setTimeout(() => {
+                        document.body.removeChild(container);
+                    }, 5000);
+                }
+
+                window.addRetroactiveWeight = async function() {
+                    const personSelect = document.getElementById('retroPerson');
+                    const weightInput = document.getElementById('retroWeight');
+                    const dateInput = document.getElementById('retroDate');
+                    const timeInput = document.getElementById('retroTime');
+                    
+                    const person = personSelect.value;
+                    const weight = parseFloat(weightInput.value);
+                    const date = dateInput.value;
+                    const time = timeInput.value;
+                    
+                    if (isNaN(weight) || weight <= 0) {
+                        alert('Please enter a valid weight');
+                        return;
+                    }
+                    
+                    if (!date) {
+                        alert('Please select a date');
+                        return;
+                    }
+                    
+                    if (!time) {
+                        alert('Please select a time');
+                        return;
+                    }
+                    
+                    const dateTimeString = date + 'T' + time;
+                    const timestamp = new Date(dateTimeString).getTime();
+                    
+                    if (isNaN(timestamp)) {
+                        alert('Invalid date/time combination');
+                        return;
+                    }
+
+                    try {
+                        await db.collection('weights').add({
+                            person: person,
+                            weight: weight,
+                            timestamp: timestamp
+                        });
+                        
+                        weightInput.value = '';
+                        dateInput.value = '';
+                        timeInput.value = '';
+                        
+                        alert('Retroactive weight entry added successfully!');
+                    } catch (error) {
+                        console.error('Error adding retroactive weight:', error);
+                        alert('Error adding weight: ' + error.message);
+                    }
+                }
+
+                function formatMessageTime(timestamp) {
+                    const date = new Date(timestamp);
+                    const now = new Date();
+                    const diffMs = now - date;
+                    const diffMins = Math.floor(diffMs / 60000);
+                    const diffHours = Math.floor(diffMs / 3600000);
+                    const diffDays = Math.floor(diffMs / 86400000);
+
+                    if (diffMins < 1) return 'Just now';
+                    if (diffMins < 60) return diffMins + 'm ago';
+                    if (diffHours < 24) return diffHours + 'h ago';
+                    if (diffDays < 7) return diffDays + 'd ago';
+                    return date.toLocaleDateString();
+                }
+
+                function updateChart() {
+                    const hasData = people.some(p => weights[p].length > 0);
+                    if (!hasData) return;
+
+                    const allTimestamps = new Set();
+                    people.forEach(person => {
+                        weights[person].forEach(entry => {
+                            allTimestamps.add(entry.timestamp);
+                        });
+                    });
+                    
+                    const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
+                    
+                    const labels = sortedTimestamps.map(ts => {
+                        const date = new Date(ts);
+                        const month = date.getMonth() + 1;
+                        const day = date.getDate();
+                        const hours = date.getHours();
+                        const minutes = date.getMinutes().toString().padStart(2, '0');
+                        return month + '/' + day + ' ' + hours + ':' + minutes;
+                    });
+
+                    const datasets = people.map(person => {
+                        const data = [];
+                        let lastWeight = null;
+
+                        sortedTimestamps.forEach(timestamp => {
+                            const entry = weights[person].find(w => w.timestamp === timestamp);
+                            if (entry) {
+                                lastWeight = entry.weight;
+                            }
+                            data.push(lastWeight);
+                        });
+
+                        return {
+                            label: person,
+                            data: data,
+                            borderColor: colors[person],
+                            backgroundColor: colors[person] + '33',
+                            borderWidth: 3,
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            tension: 0.1,
+                            spanGaps: false
+                        };
+                    }).filter(dataset => dataset.data.some(d => d !== null));
+
+                    people.forEach(person => {
+                        if (goals[person] && weights[person].length > 0) {
+                            const goalData = new Array(sortedTimestamps.length).fill(goals[person]);
+                            
+                            datasets.push({
+                                label: person + "'s Goal",
+                                data: goalData,
+                                borderColor: colors[person],
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                tension: 0,
+                                hidden: true
+                            });
+                        }
+                    });
+
+                    if (chart) {
+                        chart.destroy();
+                    }
+
+                    const ctx = document.getElementById('weightChart');
+                    if (!ctx) return;
+
+                    const isMobile = window.innerWidth < 768;
+
+                    chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: datasets
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: {
+                                mode: 'index',
+                                intersect: false,
+                            },
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: !isMobile,
+                                        text: 'Date & Time',
+                                        font: { size: isMobile ? 10 : 12 }
+                                    },
+                                    ticks: {
+                                        maxRotation: 45,
+                                        minRotation: 45,
+                                        font: { size: isMobile ? 9 : 10 },
+                                        autoSkip: true,
+                                        maxTicksLimit: isMobile ? 6 : 10
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: isMobile ? 'lbs' : 'Weight (lbs)',
+                                        font: { size: isMobile ? 10 : 12 }
+                                    },
+                                    ticks: { font: { size: isMobile ? 10 : 11 } }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                    labels: {
+                                        padding: isMobile ? 10 : 20,
+                                        font: { size: isMobile ? 11 : 12 },
+                                        usePointStyle: true,
+                                        boxWidth: isMobile ? 6 : 8,
+                                        filter: function(legendItem) {
+                                            return !legendItem.text.includes('Goal');
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    enabled: true,
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    padding: isMobile ? 8 : 12,
+                                    bodyFont: { size: isMobile ? 11 : 13 },
+                                    titleFont: { size: isMobile ? 12 : 14 },
+                                    callbacks: {
+                                        label: function(context) {
+                                            if (context.parsed.y === null) return null;
+                                            return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + ' lbs';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                window.setPortions = function(portions) {
+                    const recipe = getDailyRecipe();
+                    const ingredientsList = document.getElementById('ingredientsList');
+                    const buttons = document.querySelectorAll('.portion-btn');
+                    
+                    buttons.forEach((btn, index) => {
+                        btn.classList.toggle('active', index === portions - 1);
+                    });
+                    
+                    const ingredients = portions === 1 ? recipe.ingredients1 : recipe.ingredients2;
+                    ingredientsList.innerHTML = ingredients.map(ing => '<li>' + ing + '</li>').join('');
+                }
+
+                function render() {
+                    try {
+                        console.log('Rendering...');
+                        const hasData = people.some(p => weights[p].length > 0);
+                        const poundsLeader = getLeaderByPounds();
+                        const pctLeader = getLeaderByPercentage();
+                        const dailyRecipe = getDailyRecipe();
+
+                        let html = '<div class="container">';
+                        html += '<div class="header">';
+                        html += '<h1>⚖️ Cherokee Chooters Shred ⚖️</h1>';
+                        html += '<p class="subtitle">' + getDailyQuote() + '</p>';
+                        html += '</div>';
+
+                        html += '<div class="stats">';
+                        html += '<div class="stat-card cruise">';
+                        html += '<div class="stat-label">Days Until Cruise 🚢</div>';
+                        html += '<div class="stat-value">' + getDaysUntilCruise() + '</div>';
+                        html += '</div>';
+                        
+                        if (hasData) {
+                            html += '<div class="stat-card total">';
+                            html += '<div class="stat-label">Total Weight Lost Together</div>';
+                            html += '<div class="stat-value">' + getTotalWeightLoss().toFixed(1) + ' lbs</div>';
+                            html += '</div>';
+                        }
+                        html += '</div>';
+
+                        if (hasData && poundsLeader) {
+                            html += '<div class="stats">';
+                            html += '<div class="stat-card leader">';
+                            html += '<div class="stat-label">🏆 Pounds Leader</div>';
+                            html += '<div class="stat-value">' + poundsLeader.name + '</div>';
+                            html += '<div class="stat-subtext">' + poundsLeader.loss.toFixed(1) + ' lbs lost</div>';
+                            html += '</div>';
+                            
+                            html += '<div class="stat-card leader-pct">';
+                            html += '<div class="stat-label">🏆 Percentage Leader</div>';
+                            html += '<div class="stat-value">' + pctLeader.name + '</div>';
+                            html += '<div class="stat-subtext">' + pctLeader.percentage.toFixed(1) + '% lost</div>';
+                            html += '</div>';
+                            html += '</div>';
+                        }
+
+                        html += '<div class="grid">';
+                        people.forEach(person => {
+                            const streak = getStreak(person);
+                            const progress = getGoalProgress(person);
+                            const badges = getBadges(person);
+                            
+                            html += '<div class="person-card">';
+                            html += '<h3 class="person-name" style="color: ' + colors[person] + '">';
+                            html += person;
+                            if (hasMetGoal(person)) {
+                                html += '<span class="goal-celebration">🎉🎊</span>';
+                            }
+                            html += '</h3>';
+                            
+                            html += '<div class="input-group">';
+                            html += '<label>Today\'s Weight (lbs)</label>';
+                            html += '<div class="input-row">';
+                            html += '<input type="number" step="0.1" id="weight-' + person + '" placeholder="Enter weight" onkeypress="if(event.key===\'Enter\') addWeight(\'' + person + '\')" />';
+                            html += '<button class="btn-add" onclick="addWeight(\'' + person + '\')">Add</button>';
+                            html += '</div>';
+                            html += '</div>';
+
+                            html += '<div class="input-group">';
+                            html += '<label>🎯 Goal Weight (lbs)</label>';
+                            html += '<div class="input-row">';
+                            html += '<input type="number" step="0.1" id="goal-' + person + '" placeholder="' + (goals[person] ? 'Current: ' + goals[person] : 'Set goal') + '" onkeypress="if(event.key===\'Enter\') setGoal(\'' + person + '\')" />';
+                            html += '<button class="btn-goal" onclick="setGoal(\'' + person + '\')">Set</button>';
+                            html += '</div>';
+                            if (goals[person]) {
+                                html += '<p class="stat-text">Goal: ' + goals[person] + ' lbs</p>';
+                            }
+                            html += '</div>';
+
+                            // NEW: Progress bar toward goal
+                            if (progress !== null) {
+                                html += '<div class="progress-container">';
+                                html += '<div class="progress-label">';
+                                html += '<span>Progress to Goal</span>';
+                                html += '<span>' + progress.toFixed(0) + '%</span>';
+                                html += '</div>';
+                                html += '<div class="progress-bar">';
+                                html += '<div class="progress-fill" style="width: ' + progress + '%; background: ' + colors[person] + ';"></div>';
+                                html += '</div>';
+                                html += '</div>';
+                            }
+
+                            // NEW: Streak display
+                            if (streak > 0) {
+                                html += '<div class="streak-display' + (streak >= 7 ? ' hot' : '') + '">';
+                                html += '<span class="streak-fire">' + (streak >= 7 ? '🔥' : '📅') + '</span>';
+                                html += '<span><strong>' + streak + ' day' + (streak !== 1 ? 's' : '') + '</strong> logging streak!</span>';
+                                html += '</div>';
+                            }
+
+                            // NEW: Badges
+                            if (badges.length > 0) {
+                                html += '<div class="badges-container">';
+                                badges.forEach(badge => {
+                                    html += '<span class="badge ' + badge.class + '">' + badge.icon + ' ' + badge.text + '</span>';
+                                });
+                                html += '</div>';
+                            }
+
+                            if (weights[person].length > 0) {
+                                html += '<div class="person-stats">';
+                                html += '<div class="stat-row">';
+                                html += '<div>';
+                                html += '<p class="stat-text">Latest: ' + weights[person][weights[person].length - 1].weight + ' lbs</p>';
+                                // NEW: Starting Weight added here
+                                if (weights[person].length > 0) {
+                                    html += '<p class="stat-text">Starting: ' + weights[person][0].weight + ' lbs</p>';
+                                }
+                                html += '<p class="stat-text">' + formatLastEntry(weights[person][weights[person].length - 1].timestamp) + '</p>';
+                                html += '<p class="stat-text">Total entries: ' + weights[person].length + '</p>';
+                                if (weights[person].length >= 2) {
+                                    const loss = getWeightLoss(person);
+                                    const lossPct = getWeightLossPercentage(person);
+                                    html += '<p class="progress" style="color: ' + colors[person] + '">';
+                                    html += (loss >= 0 ? '↓' : '↑') + ' ';
+                                    html += Math.abs(loss).toFixed(1) + ' lbs ';
+                                    html += '(' + (lossPct >= 0 ? '-' : '+') + Math.abs(lossPct).toFixed(1) + '%)';
+                                    html += '</p>';
+                                }
+                                html += '</div>';
+                                html += '<button class="btn-delete" onclick="deleteLastWeight(\'' + person + '\')">Delete Last</button>';
+                                html += '</div>';
+                                html += '</div>';
+                            }
+                            html += '</div>';
+                        });
+                        html += '</div>';
+
+                        if (hasData) {
+                            html += '<div class="chart-container">';
+                            html += '<h2 class="chart-title">Progress Chart</h2>';
+                            html += '<div class="chart-wrapper">';
+                            html += '<canvas id="weightChart"></canvas>';
+                            html += '</div>';
+                            html += '</div>';
+                        }
+
+                        if (hasData) {
+                            html += '<div class="table-container">';
+                            html += '<div class="table-title">';
+                            html += '<span>Weight Entry History</span>';
+                            html += '<button class="btn-download" onclick="downloadCSV()">📥 Download CSV</button>';
+                            html += '</div>';
+                            html += '<table>';
+                            html += '<thead><tr><th>Name</th><th>Weight</th><th>Timestamp</th></tr></thead>';
+                            html += '<tbody>';
+                            getAllEntries().forEach(entry => {
+                                html += '<tr>';
+                                html += '<td class="name-cell" style="color: ' + colors[entry.person] + '">' + entry.person + '</td>';
+                                html += '<td>' + entry.weight + ' lbs</td>';
+                                html += '<td>' + formatTimestamp(entry.timestamp) + '</td>';
+                                html += '</tr>';
+                            });
+                            html += '</tbody>';
+                            html += '</table>';
+                            html += '</div>';
+                        }
+                        
+                        // NEW: Message Board Section Restored
+                        html += '<div class="message-board">';
+                        html += '<h2 class="message-board-title">💬 Message Board</h2>';
+                        
+                        html += '<div class="message-input-area">';
+                        html += '<select id="messagePerson" class="message-select">';
+                        people.forEach(p => {
+                            html += '<option value="' + p + '">' + p + '</option>';
+                        });
+                        html += '</select>';
+                        html += '<input type="text" id="messageInput" class="message-input" placeholder="Type a message..." onkeypress="if(event.key===\'Enter\') postMessage()">';
+                        html += '<button class="btn-post" onclick="postMessage()">Post</button>';
+                        html += '</div>';
+
+                        html += '<div class="messages-list">';
+                        messages.forEach(msg => {
+                            html += '<div class="message-item">';
+                            html += '<div class="message-header">';
+                            html += '<span class="message-author" style="color: ' + colors[msg.person] + '">' + msg.person + '</span>';
+                            html += '<div>';
+                            html += '<span class="message-time">' + formatMessageTime(msg.timestamp) + '</span>';
+                            html += '<button class="btn-delete-message" onclick="deleteMessage(\'' + msg.id + '\')">×</button>';
+                            html += '</div>';
+                            html += '</div>';
+                            html += '<div class="message-text">' + msg.message + '</div>';
+                            html += '</div>';
+                        });
+                        if (messages.length === 0) {
+                            html += '<div style="text-align: center; color: #6b7280; padding: 1rem;">No messages yet. Be the first to post!</div>';
+                        }
+                        html += '</div>';
+                        html += '</div>';
+
+                        // FIXED: Reconstructed the Recipe section
+                        html += '<div class="retroactive-entry">';
+                        html += '<h2 class="retroactive-title">🕒 Add Past Weight Entry</h2>';
+                        html += '<div class="retroactive-form">';
+                        
+                        html += '<div class="form-group">';
+                        html += '<label class="form-label">Person</label>';
+                        html += '<select id="retroPerson" class="form-input">';
+                        people.forEach(p => {
+                            html += '<option value="' + p + '">' + p + '</option>';
+                        });
+                        html += '</select>';
+                        html += '</div>';
+
+                        html += '<div class="form-group">';
+                        html += '<label class="form-label">Weight (lbs)</label>';
+                        html += '<input type="number" step="0.1" id="retroWeight" class="form-input" placeholder="0.0">';
+                        html += '</div>';
+
+                        html += '<div class="form-group">';
+                        html += '<label class="form-label">Date</label>';
+                        html += '<input type="date" id="retroDate" class="form-input">';
+                        html += '</div>';
+
+                        html += '<div class="form-group">';
+                        html += '<label class="form-label">Time</label>';
+                        html += '<input type="time" id="retroTime" class="form-input">';
+                        html += '</div>';
+
+                        html += '<button class="btn-add-retroactive" onclick="addRetroactiveWeight()">Add Entry</button>';
+                        
+                        html += '</div>'; // end form
+                        html += '</div>'; // end container
+
+                        html += '<div class="recipe-container">';
+                        html += '<h2 class="recipe-title">Daily Healthy Recipe</h2>';
+                        html += '<h3 class="recipe-name">' + dailyRecipe.name + '</h3>';
+                        
+                        html += '<div class="recipe-section">';
+                        html += '<div class="recipe-section-title">Ingredients</div>';
+                        html += '<div class="portion-selector">';
+                        html += '<button class="portion-btn active" onclick="setPortions(1)">1 Portion</button>';
+                        html += '<button class="portion-btn" onclick="setPortions(2)">2 Portions</button>';
+                        html += '</div>';
+                        html += '<ul class="ingredients-list" id="ingredientsList">';
+                        dailyRecipe.ingredients1.forEach(ing => {
+                            html += '<li>' + ing + '</li>';
+                        });
+                        html += '</ul>';
+                        html += '</div>';
+
+                        html += '<div class="recipe-section">';
+                        html += '<div class="recipe-section-title">Instructions</div>';
+                        html += '<ol class="instructions-list">';
+                        dailyRecipe.instructions.forEach(step => {
+                            html += '<li>' + step + '</li>';
+                        });
+                        html += '</ol>';
+                        html += '</div>';
+
+                        html += '<div class="recipe-section">';
+                        html += '<div class="recipe-section-title">Nutrition (per serving)</div>';
+                        html += '<div class="macros-grid">';
+                        html += '<div class="macro-card"><div class="macro-label">Calories</div><div class="macro-value">' + dailyRecipe.macros.calories + '</div></div>';
+                        html += '<div class="macro-card"><div class="macro-label">Protein</div><div class="macro-value">' + dailyRecipe.macros.protein + '<span class="macro-unit">g</span></div></div>';
+                        html += '<div class="macro-card"><div class="macro-label">Carbs</div><div class="macro-value">' + dailyRecipe.macros.carbs + '<span class="macro-unit">g</span></div></div>';
+                        html += '<div class="macro-card"><div class="macro-label">Fat</div><div class="macro-value">' + dailyRecipe.macros.fat + '<span class="macro-unit">g</span></div></div>';
+                        html += '<div class="macro-card"><div class="macro-label">Fiber</div><div class="macro-value">' + dailyRecipe.macros.fiber + '<span class="macro-unit">g</span></div></div>';
+                        html += '</div>';
+                        html += '</div>';
+                        html += '</div>'; // End recipe-container
+
+                        html += '</div>'; // End main container
+                        
+                        document.getElementById('root').innerHTML = html;
+                        
+                        if (hasData) {
+                            setTimeout(updateChart, 100);
+                        }
+                    } catch (e) {
+                        console.error("Critical Render Error", e);
+                        document.getElementById('root').innerHTML = '<div class="error"><h2>Application Error</h2><p>' + e.message + '</p></div>';
+                    }
+                }
+
+                console.log('Setup complete!');
+            } catch (e) {
+                console.error("Critical Init Error", e);
+                document.getElementById('root').innerHTML = '<div class="error"><h2>Initialization Error</h2><p>' + e.message + '</p></div>';
+            }
+        }
     </script>
 </body>
 </html>
