@@ -1119,36 +1119,42 @@
                 const db = firebase.firestore();
                 console.log('Firebase initialized!');
 
-                const people = ['Adam', 'Sean', 'Daniel', 'Mark'];
-                const colors = {
-                    Adam: '#3b82f6',
-                    Sean: '#ef4444',
-                    Daniel: '#10b981',
-                    Mark: '#f59e0b'
-                };
+                const people = ['Adam', 'Sean', 'Daniel', 'Mark', 'John'];
+            
+            // 2. Assign John a unique color (e.g., Purple)
+            const colors = {
+                Adam: '#3b82f6',
+                Sean: '#ef4444',
+                Daniel: '#10b981',
+                Mark: '#f59e0b',
+                John: '#8b5cf6' 
+            };
 
-                let weights = { Adam: [], Sean: [], Daniel: [], Mark: [] };
-                let goals = { Adam: null, Sean: null, Daniel: null, Mark: null };
-                let loaded = false;
-                let chart = null;
-                let messages = [];
+            // 3. Initialize his data containers
+            let weights = { Adam: [], Sean: [], Daniel: [], Mark: [], John: [] };
+            let goals = { Adam: null, Sean: null, Daniel: null, Mark: null, John: null };
+            let loaded = false;
+            let chart = null;
+            let messages = [];
 
-                console.log('Setting up listeners...');
+            console.log('Setting up listeners...');
+            
+            db.collection('weights').onSnapshot((snapshot) => {
+                console.log('Weights snapshot received, docs:', snapshot.size);
                 
-                db.collection('weights').onSnapshot((snapshot) => {
-                    console.log('Weights snapshot received, docs:', snapshot.size);
-                    weights = { Adam: [], Sean: [], Daniel: [], Mark: [] };
-                    
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
-                        if (weights[data.person] !== undefined) {
-                            weights[data.person].push({
-                                id: doc.id,
-                                timestamp: data.timestamp,
-                                weight: data.weight
-                            });
-                        }
-                    });
+                // 4. IMPORTANT: Add John to the reset line inside the listener
+                weights = { Adam: [], Sean: [], Daniel: [], Mark: [], John: [] };
+                
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (weights[data.person] !== undefined) {
+                        weights[data.person].push({
+                            id: doc.id,
+                            timestamp: data.timestamp,
+                            weight: data.weight
+                        });
+                    }
+                });
 
                     Object.keys(weights).forEach(person => {
                         weights[person].sort((a, b) => a.timestamp - b.timestamp);
