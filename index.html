@@ -1633,34 +1633,48 @@
                     const hasData = people.some(p => weights[p].length > 0);
                     if (!hasData) return;
 
-                    const allTimestamps = new Set();
+                    // Helper to get date string (YYYY-MM-DD) from timestamp
+                    function getDateKey(timestamp) {
+                        const date = new Date(timestamp);
+                        return date.getFullYear() + '-' + 
+                               String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                               String(date.getDate()).padStart(2, '0');
+                    }
+
+                    // Collect all unique dates
+                    const allDates = new Set();
                     people.forEach(person => {
                         weights[person].forEach(entry => {
-                            allTimestamps.add(entry.timestamp);
+                            allDates.add(getDateKey(entry.timestamp));
                         });
                     });
                     
-                    const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
+                    const sortedDates = Array.from(allDates).sort();
                     
-                    const labels = sortedTimestamps.map(ts => {
-                        const date = new Date(ts);
-                        const month = date.getMonth() + 1;
-                        const day = date.getDate();
-                        const hours = date.getHours();
-                        const minutes = date.getMinutes().toString().padStart(2, '0');
-                        return month + '/' + day + ' ' + hours + ':' + minutes;
+                    // Format labels as M/D
+                    const labels = sortedDates.map(dateStr => {
+                        const [year, month, day] = dateStr.split('-');
+                        return parseInt(month) + '/' + parseInt(day);
                     });
 
                     const datasets = people.map(person => {
                         const data = [];
-                        let lastWeight = null;
 
-                        sortedTimestamps.forEach(timestamp => {
-                            const entry = weights[person].find(w => w.timestamp === timestamp);
-                            if (entry) {
-                                lastWeight = entry.weight;
+                        // For each person, get their weight for each date (if they logged one)
+                        // If multiple entries on same day, use the last one
+                        const weightsByDate = {};
+                        weights[person].forEach(entry => {
+                            const dateKey = getDateKey(entry.timestamp);
+                            // Keep the entry (last one wins if multiple on same day)
+                            if (!weightsByDate[dateKey] || entry.timestamp > weightsByDate[dateKey].timestamp) {
+                                weightsByDate[dateKey] = entry;
                             }
-                            data.push(lastWeight);
+                        });
+
+                        sortedDates.forEach(dateKey => {
+                            const entry = weightsByDate[dateKey];
+                            // Only push actual weight if they logged on this date, otherwise null
+                            data.push(entry ? entry.weight : null);
                         });
 
                         return {
@@ -1672,13 +1686,13 @@
                             pointRadius: 5,
                             pointHoverRadius: 7,
                             tension: 0.1,
-                            spanGaps: false
+                            spanGaps: true  // Connect points across gaps (null values)
                         };
                     }).filter(dataset => dataset.data.some(d => d !== null));
 
                     people.forEach(person => {
                         if (goals[person] && weights[person].length > 0) {
-                            const goalData = new Array(sortedTimestamps.length).fill(goals[person]);
+                            const goalData = new Array(sortedDates.length).fill(goals[person]);
                             
                             datasets.push({
                                 label: person + "'s Goal",
@@ -1720,7 +1734,7 @@
                                 x: {
                                     title: {
                                         display: !isMobile,
-                                        text: 'Date & Time',
+                                        text: 'Date',
                                         font: { size: isMobile ? 10 : 12 }
                                     },
                                     ticks: {
