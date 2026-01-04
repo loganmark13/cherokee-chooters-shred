@@ -857,6 +857,101 @@
                 padding: 0.2rem 0.4rem;
             }
         }
+        
+        /* Body Transformation Visualization */
+        .body-viz-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 2rem 0;
+            text-align: center;
+        }
+        
+        .body-viz-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        
+        .body-viz-subtitle {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-bottom: 1.5rem;
+        }
+        
+        .body-viz-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 3rem;
+            flex-wrap: wrap;
+        }
+        
+        .body-figure {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .body-figure-label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .body-svg {
+            transition: all 0.5s ease;
+        }
+        
+        .body-stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .body-stat {
+            text-align: center;
+        }
+        
+        .body-stat-value {
+            font-size: 1.75rem;
+            font-weight: bold;
+            color: #6366f1;
+        }
+        
+        .body-stat-value.goal {
+            color: #10b981;
+        }
+        
+        .body-stat-label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-transform: uppercase;
+        }
+        
+        .progress-arc-container {
+            margin-top: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .body-viz-wrapper {
+                gap: 1.5rem;
+            }
+            
+            .body-stats {
+                gap: 1rem;
+            }
+            
+            .body-stat-value {
+                font-size: 1.25rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1328,6 +1423,265 @@
                     });
                     
                     return leader ? { name: leader, percentage: maxPercentage } : null;
+                }
+
+                // Calculate group progress for body visualization
+                function getGroupProgress() {
+                    let totalStartWeight = 0;
+                    let totalCurrentWeight = 0;
+                    let totalGoalWeight = 0;
+                    let peopleWithData = 0;
+                    let peopleWithGoals = 0;
+                    
+                    people.forEach(person => {
+                        if (weights[person].length > 0) {
+                            totalStartWeight += weights[person][0].weight;
+                            totalCurrentWeight += weights[person][weights[person].length - 1].weight;
+                            peopleWithData++;
+                            
+                            if (goals[person]) {
+                                totalGoalWeight += goals[person];
+                                peopleWithGoals++;
+                            } else {
+                                // If no goal, use starting weight as goal (no progress to track)
+                                totalGoalWeight += weights[person][0].weight;
+                            }
+                        }
+                    });
+                    
+                    if (peopleWithData === 0) {
+                        return { progress: 0, totalLost: 0, totalToLose: 0, hasGoals: false };
+                    }
+                    
+                    const totalToLose = totalStartWeight - totalGoalWeight;
+                    const totalLost = totalStartWeight - totalCurrentWeight;
+                    const progress = totalToLose > 0 ? Math.min(100, Math.max(0, (totalLost / totalToLose) * 100)) : 0;
+                    
+                    return {
+                        progress: progress,
+                        totalLost: totalLost,
+                        totalToLose: totalToLose,
+                        totalStartWeight: totalStartWeight,
+                        totalCurrentWeight: totalCurrentWeight,
+                        totalGoalWeight: totalGoalWeight,
+                        hasGoals: peopleWithGoals > 0
+                    };
+                }
+
+                // Generate SVG for body figure based on "fatness" level (0-100, where 0 is skinniest)
+                // flexLevel: 0-100, where 0 = arms down, 100 = full bicep flex
+                function generateBodySVG(fatnessLevel, color, size, flexLevel) {
+                    flexLevel = flexLevel || 0;
+                    // fatnessLevel: 0 = goal achieved (skinniest), 100 = starting point (fattest)
+                    const scale = size / 200; // base size is 200
+                    
+                    // Body proportions scale with fatness
+                    const minWidth = 0.6;  // minimum width multiplier at goal
+                    const maxWidth = 1.0;  // maximum width multiplier at start
+                    const widthMultiplier = minWidth + (maxWidth - minWidth) * (fatnessLevel / 100);
+                    
+                    // Muscle definition increases as fatness decreases
+                    const muscleDefinition = 1 - (fatnessLevel / 100); // 0 to 1
+                    
+                    // Head stays constant
+                    const headRadius = 22 * scale;
+                    const headCY = 30 * scale;
+                    
+                    // Neck
+                    const neckWidth = 12 * scale;
+                    const neckTop = 50 * scale;
+                    const neckBottom = 60 * scale;
+                    
+                    // Torso dimensions scale with fatness
+                    const shoulderWidth = 55 * scale * widthMultiplier;
+                    const chestWidth = 50 * scale * widthMultiplier;
+                    const waistWidth = 45 * scale * widthMultiplier;
+                    const hipWidth = 48 * scale * widthMultiplier;
+                    
+                    const shoulderY = 65 * scale;
+                    const chestY = 90 * scale;
+                    const waistY = 120 * scale;
+                    const hipY = 145 * scale;
+                    
+                    // Belly protrusion based on fatness
+                    const bellyBulge = 8 * scale * (fatnessLevel / 100);
+                    
+                    // Legs
+                    const thighWidth = 18 * scale * widthMultiplier;
+                    const calfWidth = 12 * scale * widthMultiplier;
+                    const legSpacing = 12 * scale;
+                    const legBottom = 195 * scale;
+                    const kneeY = 165 * scale;
+                    
+                    // Arms - bicep size increases with muscle definition
+                    const baseArmWidth = 10 * scale;
+                    const bicepBulge = 6 * scale * muscleDefinition; // Bicep gets bigger as you get leaner
+                    const upperArmWidth = baseArmWidth + bicepBulge;
+                    const forearmWidth = 8 * scale + (2 * scale * muscleDefinition);
+                    
+                    const centerX = 100 * scale;
+                    const svgWidth = 200 * scale;
+                    const svgHeight = 200 * scale;
+                    
+                    // Unique ID for this SVG's gradients and animations
+                    const uniqueId = Math.random().toString(36).substr(2, 9);
+                    
+                    // Build the SVG path for the body
+                    let svg = '<svg width="' + svgWidth + '" height="' + svgHeight + '" viewBox="0 0 ' + svgWidth + ' ' + svgHeight + '" class="body-svg">';
+                    
+                    // Add gradient and animation definitions
+                    svg += '<defs>';
+                    svg += '<linearGradient id="bodyGradient' + uniqueId + '" x1="0%" y1="0%" x2="100%" y2="0%">';
+                    svg += '<stop offset="0%" style="stop-color:' + color + ';stop-opacity:0.8" />';
+                    svg += '<stop offset="50%" style="stop-color:' + color + ';stop-opacity:1" />';
+                    svg += '<stop offset="100%" style="stop-color:' + color + ';stop-opacity:0.8" />';
+                    svg += '</linearGradient>';
+                    svg += '</defs>';
+                    
+                    // Head
+                    svg += '<circle cx="' + centerX + '" cy="' + headCY + '" r="' + headRadius + '" fill="url(#bodyGradient' + uniqueId + ')" />';
+                    
+                    // Body path using curves
+                    let bodyPath = 'M ' + (centerX - neckWidth/2) + ' ' + neckTop;
+                    
+                    // Left side of body
+                    bodyPath += ' L ' + (centerX - neckWidth/2) + ' ' + neckBottom;
+                    bodyPath += ' L ' + (centerX - shoulderWidth) + ' ' + shoulderY;
+                    bodyPath += ' Q ' + (centerX - chestWidth - 5*scale) + ' ' + chestY + ' ' + (centerX - waistWidth - bellyBulge) + ' ' + waistY;
+                    bodyPath += ' Q ' + (centerX - hipWidth) + ' ' + (hipY - 10*scale) + ' ' + (centerX - hipWidth/2 - legSpacing) + ' ' + hipY;
+                    
+                    // Left leg
+                    bodyPath += ' L ' + (centerX - thighWidth - legSpacing) + ' ' + hipY;
+                    bodyPath += ' Q ' + (centerX - thighWidth - legSpacing - 2*scale) + ' ' + kneeY + ' ' + (centerX - calfWidth - legSpacing) + ' ' + kneeY;
+                    bodyPath += ' L ' + (centerX - calfWidth - legSpacing) + ' ' + legBottom;
+                    bodyPath += ' L ' + (centerX - legSpacing) + ' ' + legBottom;
+                    bodyPath += ' L ' + (centerX - legSpacing) + ' ' + kneeY;
+                    bodyPath += ' Q ' + (centerX - legSpacing + 2*scale) + ' ' + kneeY + ' ' + (centerX - legSpacing) + ' ' + hipY;
+                    
+                    // Crotch area
+                    bodyPath += ' L ' + (centerX + legSpacing) + ' ' + hipY;
+                    
+                    // Right leg
+                    bodyPath += ' Q ' + (centerX + legSpacing - 2*scale) + ' ' + kneeY + ' ' + (centerX + legSpacing) + ' ' + kneeY;
+                    bodyPath += ' L ' + (centerX + legSpacing) + ' ' + legBottom;
+                    bodyPath += ' L ' + (centerX + calfWidth + legSpacing) + ' ' + legBottom;
+                    bodyPath += ' L ' + (centerX + calfWidth + legSpacing) + ' ' + kneeY;
+                    bodyPath += ' Q ' + (centerX + thighWidth + legSpacing + 2*scale) + ' ' + kneeY + ' ' + (centerX + thighWidth + legSpacing) + ' ' + hipY;
+                    bodyPath += ' L ' + (centerX + hipWidth/2 + legSpacing) + ' ' + hipY;
+                    
+                    // Right side of body (going up)
+                    bodyPath += ' Q ' + (centerX + hipWidth) + ' ' + (hipY - 10*scale) + ' ' + (centerX + waistWidth + bellyBulge) + ' ' + waistY;
+                    bodyPath += ' Q ' + (centerX + chestWidth + 5*scale) + ' ' + chestY + ' ' + (centerX + shoulderWidth) + ' ' + shoulderY;
+                    bodyPath += ' L ' + (centerX + neckWidth/2) + ' ' + neckBottom;
+                    bodyPath += ' L ' + (centerX + neckWidth/2) + ' ' + neckTop;
+                    bodyPath += ' Z';
+                    
+                    svg += '<path d="' + bodyPath + '" fill="url(#bodyGradient' + uniqueId + ')" />';
+                    
+                    // Calculate arm positions based on flex level
+                    // flexLevel 0 = arms down at sides
+                    // flexLevel 100 = arms up in full bicep flex pose
+                    const flexRatio = flexLevel / 100;
+                    
+                    // Animation duration - slower flex looks more natural
+                    const animDuration = '2s';
+                    
+                    // LEFT ARM - Flexing bicep pose
+                    const leftShoulderX = centerX - shoulderWidth;
+                    const leftShoulderY = shoulderY;
+                    
+                    // Upper arm rotates from pointing down (-80deg) to pointing up-left (-160deg)
+                    const leftUpperArmAngle = -80 + (-80 * flexRatio); // -80 to -160
+                    const leftUpperArmLength = 28 * scale;
+                    
+                    // Calculate upper arm end point
+                    const leftElbowX = leftShoulderX + Math.cos(leftUpperArmAngle * Math.PI / 180) * leftUpperArmLength;
+                    const leftElbowY = leftShoulderY - Math.sin(leftUpperArmAngle * Math.PI / 180) * leftUpperArmLength;
+                    
+                    // Forearm rotates to point up when flexing
+                    const leftForearmAngle = -100 + (70 * flexRatio); // forearm angle relative to upper arm
+                    const leftForearmLength = 25 * scale;
+                    
+                    const leftHandX = leftElbowX + Math.cos((leftUpperArmAngle + leftForearmAngle + 180) * Math.PI / 180) * leftForearmLength;
+                    const leftHandY = leftElbowY - Math.sin((leftUpperArmAngle + leftForearmAngle + 180) * Math.PI / 180) * leftForearmLength;
+                    
+                    // Draw left upper arm
+                    svg += '<g class="left-arm">';
+                    // Upper arm
+                    svg += '<line x1="' + leftShoulderX + '" y1="' + leftShoulderY + '" x2="' + leftElbowX + '" y2="' + leftElbowY + '" ';
+                    svg += 'stroke="url(#bodyGradient' + uniqueId + ')" stroke-width="' + upperArmWidth + '" stroke-linecap="round">';
+                    if (flexLevel > 0) {
+                        svg += '<animate attributeName="stroke-width" values="' + upperArmWidth + ';' + (upperArmWidth * 1.15) + ';' + upperArmWidth + '" dur="' + animDuration + '" repeatCount="indefinite" />';
+                    }
+                    svg += '</line>';
+                    
+                    // Bicep bulge when flexing
+                    if (flexLevel > 20) {
+                        const bicepX = (leftShoulderX + leftElbowX) / 2 + (5 * scale * flexRatio);
+                        const bicepY = (leftShoulderY + leftElbowY) / 2 - (3 * scale * flexRatio);
+                        const bicepSize = (4 + 6 * flexRatio) * scale * muscleDefinition;
+                        svg += '<ellipse cx="' + bicepX + '" cy="' + bicepY + '" rx="' + (bicepSize * 0.8) + '" ry="' + bicepSize + '" fill="url(#bodyGradient' + uniqueId + ')" transform="rotate(' + (leftUpperArmAngle + 90) + ' ' + bicepX + ' ' + bicepY + ')">';
+                        svg += '<animate attributeName="ry" values="' + bicepSize + ';' + (bicepSize * 1.2) + ';' + bicepSize + '" dur="' + animDuration + '" repeatCount="indefinite" />';
+                        svg += '</ellipse>';
+                    }
+                    
+                    // Forearm
+                    svg += '<line x1="' + leftElbowX + '" y1="' + leftElbowY + '" x2="' + leftHandX + '" y2="' + leftHandY + '" ';
+                    svg += 'stroke="url(#bodyGradient' + uniqueId + ')" stroke-width="' + forearmWidth + '" stroke-linecap="round" />';
+                    
+                    // Fist
+                    svg += '<circle cx="' + leftHandX + '" cy="' + leftHandY + '" r="' + (6 * scale) + '" fill="url(#bodyGradient' + uniqueId + ')" />';
+                    svg += '</g>';
+                    
+                    // RIGHT ARM - Flexing bicep pose (mirrored)
+                    const rightShoulderX = centerX + shoulderWidth;
+                    const rightShoulderY = shoulderY;
+                    
+                    // Upper arm rotates from pointing down (260deg) to pointing up-right (340deg)
+                    const rightUpperArmAngle = -100 + (80 * flexRatio); // -100 to -20
+                    const rightUpperArmLength = 28 * scale;
+                    
+                    // Calculate upper arm end point
+                    const rightElbowX = rightShoulderX + Math.cos(rightUpperArmAngle * Math.PI / 180) * rightUpperArmLength;
+                    const rightElbowY = rightShoulderY - Math.sin(rightUpperArmAngle * Math.PI / 180) * rightUpperArmLength;
+                    
+                    // Forearm
+                    const rightForearmAngle = 100 - (70 * flexRatio);
+                    const rightForearmLength = 25 * scale;
+                    
+                    const rightHandX = rightElbowX + Math.cos((rightUpperArmAngle + rightForearmAngle + 180) * Math.PI / 180) * rightForearmLength;
+                    const rightHandY = rightElbowY - Math.sin((rightUpperArmAngle + rightForearmAngle + 180) * Math.PI / 180) * rightForearmLength;
+                    
+                    // Draw right arm
+                    svg += '<g class="right-arm">';
+                    // Upper arm
+                    svg += '<line x1="' + rightShoulderX + '" y1="' + rightShoulderY + '" x2="' + rightElbowX + '" y2="' + rightElbowY + '" ';
+                    svg += 'stroke="url(#bodyGradient' + uniqueId + ')" stroke-width="' + upperArmWidth + '" stroke-linecap="round">';
+                    if (flexLevel > 0) {
+                        svg += '<animate attributeName="stroke-width" values="' + upperArmWidth + ';' + (upperArmWidth * 1.15) + ';' + upperArmWidth + '" dur="' + animDuration + '" repeatCount="indefinite" />';
+                    }
+                    svg += '</line>';
+                    
+                    // Bicep bulge when flexing
+                    if (flexLevel > 20) {
+                        const bicepX = (rightShoulderX + rightElbowX) / 2 - (5 * scale * flexRatio);
+                        const bicepY = (rightShoulderY + rightElbowY) / 2 - (3 * scale * flexRatio);
+                        const bicepSize = (4 + 6 * flexRatio) * scale * muscleDefinition;
+                        svg += '<ellipse cx="' + bicepX + '" cy="' + bicepY + '" rx="' + (bicepSize * 0.8) + '" ry="' + bicepSize + '" fill="url(#bodyGradient' + uniqueId + ')" transform="rotate(' + (-rightUpperArmAngle - 90) + ' ' + bicepX + ' ' + bicepY + ')">';
+                        svg += '<animate attributeName="ry" values="' + bicepSize + ';' + (bicepSize * 1.2) + ';' + bicepSize + '" dur="' + animDuration + '" repeatCount="indefinite" />';
+                        svg += '</ellipse>';
+                    }
+                    
+                    // Forearm
+                    svg += '<line x1="' + rightElbowX + '" y1="' + rightElbowY + '" x2="' + rightHandX + '" y2="' + rightHandY + '" ';
+                    svg += 'stroke="url(#bodyGradient' + uniqueId + ')" stroke-width="' + forearmWidth + '" stroke-linecap="round" />';
+                    
+                    // Fist
+                    svg += '<circle cx="' + rightHandX + '" cy="' + rightHandY + '" r="' + (6 * scale) + '" fill="url(#bodyGradient' + uniqueId + ')" />';
+                    svg += '</g>';
+                    
+                    svg += '</svg>';
+                    return svg;
                 }
 
                 function formatLastEntry(timestamp) {
@@ -1941,6 +2295,55 @@
                             html += '<canvas id="weightChart"></canvas>';
                             html += '</div>';
                             html += '</div>';
+                        }
+
+                        // Body Transformation Visualization (between chart and table)
+                        const groupProgress = getGroupProgress();
+                        if (hasData && groupProgress.hasGoals) {
+                            const currentFatness = 100 - groupProgress.progress; // 100 = fattest (start), 0 = skinniest (goal)
+                            
+                            html += '<div class="body-viz-container">';
+                            html += '<h2 class="body-viz-title">💪 Group Transformation Progress 💪</h2>';
+                            html += '<p class="body-viz-subtitle">Watch the crew get shredded together!</p>';
+                            
+                            html += '<div class="body-viz-wrapper">';
+                            
+                            // Starting figure (fattest, no flex)
+                            html += '<div class="body-figure">';
+                            html += '<div class="body-figure-label">Starting</div>';
+                            html += generateBodySVG(100, '#94a3b8', 140, 0);
+                            html += '</div>';
+                            
+                            // Current progress figure (flex based on progress)
+                            html += '<div class="body-figure">';
+                            html += '<div class="body-figure-label">Current (' + groupProgress.progress.toFixed(0) + '%)</div>';
+                            html += generateBodySVG(currentFatness, '#6366f1', 160, groupProgress.progress);
+                            html += '</div>';
+                            
+                            // Goal figure (skinniest, full flex)
+                            html += '<div class="body-figure">';
+                            html += '<div class="body-figure-label">Goal</div>';
+                            html += generateBodySVG(0, '#10b981', 140, 100);
+                            html += '</div>';
+                            
+                            html += '</div>'; // end body-viz-wrapper
+                            
+                            html += '<div class="body-stats">';
+                            html += '<div class="body-stat">';
+                            html += '<div class="body-stat-value">' + groupProgress.totalLost.toFixed(1) + '</div>';
+                            html += '<div class="body-stat-label">Pounds Lost</div>';
+                            html += '</div>';
+                            html += '<div class="body-stat">';
+                            html += '<div class="body-stat-value">' + groupProgress.totalToLose.toFixed(1) + '</div>';
+                            html += '<div class="body-stat-label">Total Goal</div>';
+                            html += '</div>';
+                            html += '<div class="body-stat">';
+                            html += '<div class="body-stat-value goal">' + (groupProgress.totalToLose - groupProgress.totalLost).toFixed(1) + '</div>';
+                            html += '<div class="body-stat-label">Pounds To Go</div>';
+                            html += '</div>';
+                            html += '</div>'; // end body-stats
+                            
+                            html += '</div>'; // end body-viz-container
                         }
 
                         if (hasData) {
