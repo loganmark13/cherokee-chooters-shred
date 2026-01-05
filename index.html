@@ -858,98 +858,125 @@
             }
         }
         
-        /* Body Transformation Visualization */
-        .body-viz-container {
-            background: white;
-            padding: 2rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin: 2rem 0;
-            text-align: center;
+        /* Main Layout with Sidebar */
+        .main-layout {
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
         }
         
-        .body-viz-title {
-            font-size: 1.5rem;
+        .sidebar-left {
+            width: 280px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 2rem;
+        }
+        
+        .main-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        /* Beach Body Readiness Meter */
+        .beach-meter-container {
+            background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 50%, #14b8a6 100%);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+            text-align: center;
+            color: white;
+        }
+        
+        .beach-meter-title {
+            font-size: 1.1rem;
             font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 0.5rem;
-        }
-        
-        .body-viz-subtitle {
-            font-size: 0.9rem;
-            color: #6b7280;
-            margin-bottom: 1.5rem;
-        }
-        
-        .body-viz-wrapper {
+            margin-bottom: 0.25rem;
             display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            gap: 3rem;
-            flex-wrap: wrap;
-        }
-        
-        .body-figure {
-            display: flex;
-            flex-direction: column;
             align-items: center;
-        }
-        
-        .body-figure-label {
-            font-size: 0.75rem;
-            color: #6b7280;
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        
-        .body-svg {
-            transition: all 0.5s ease;
-        }
-        
-        .body-stats {
-            display: flex;
             justify-content: center;
-            gap: 2rem;
-            margin-top: 1.5rem;
-            flex-wrap: wrap;
+            gap: 0.5rem;
         }
         
-        .body-stat {
-            text-align: center;
-        }
-        
-        .body-stat-value {
-            font-size: 1.75rem;
-            font-weight: bold;
-            color: #6366f1;
-        }
-        
-        .body-stat-value.goal {
-            color: #10b981;
-        }
-        
-        .body-stat-label {
+        .beach-meter-subtitle {
             font-size: 0.75rem;
-            color: #6b7280;
-            text-transform: uppercase;
+            opacity: 0.9;
+            margin-bottom: 1rem;
         }
         
-        .progress-arc-container {
+        .beach-meter-gauge {
+            position: relative;
+            width: 180px;
+            height: 100px;
+            margin: 0 auto 1rem;
+        }
+        
+        .beach-meter-svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .beach-meter-percentage {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+        
+        .beach-meter-label {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+        
+        .beach-meter-status {
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .beach-meter-details {
             margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            font-size: 0.8rem;
+            text-align: left;
         }
         
-        @media (max-width: 768px) {
-            .body-viz-wrapper {
-                gap: 1.5rem;
+        .beach-meter-detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            opacity: 0.9;
+        }
+        
+        .beach-meter-detail-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        /* Mobile: sidebar goes on top */
+        @media (max-width: 900px) {
+            .main-layout {
+                flex-direction: column;
             }
             
-            .body-stats {
-                gap: 1rem;
+            .sidebar-left {
+                width: 100%;
+                position: static;
             }
             
-            .body-stat-value {
-                font-size: 1.25rem;
+            .beach-meter-container {
+                margin-bottom: 1rem;
+            }
+            
+            .beach-meter-gauge {
+                width: 150px;
+                height: 85px;
+            }
+            
+            .beach-meter-percentage {
+                font-size: 1.75rem;
             }
         }
     </style>
@@ -1468,220 +1495,110 @@
                     };
                 }
 
-                // Generate SVG for body figure based on "fatness" level (0-100, where 0 is skinniest)
-                // flexLevel: 0-100, where 0 = arms down, 100 = full bicep flex
-                function generateBodySVG(fatnessLevel, color, size, flexLevel) {
-                    flexLevel = flexLevel || 0;
-                    // fatnessLevel: 0 = goal achieved (skinniest), 100 = starting point (fattest)
-                    const scale = size / 200; // base size is 200
+                // Generate Beach Body Readiness Meter
+                function generateBeachMeterHTML(groupProgress) {
+                    const daysLeft = getDaysUntilCruise();
+                    const progress = groupProgress.progress || 0;
                     
-                    // Body proportions scale with fatness
-                    const minWidth = 0.6;  // minimum width multiplier at goal
-                    const maxWidth = 1.0;  // maximum width multiplier at start
-                    const widthMultiplier = minWidth + (maxWidth - minWidth) * (fatnessLevel / 100);
-                    
-                    // Muscle definition increases as fatness decreases
-                    const muscleDefinition = 1 - (fatnessLevel / 100); // 0 to 1
-                    
-                    // Head stays constant
-                    const headRadius = 22 * scale;
-                    const headCY = 30 * scale;
-                    
-                    // Neck
-                    const neckWidth = 12 * scale;
-                    const neckTop = 50 * scale;
-                    const neckBottom = 60 * scale;
-                    
-                    // Torso dimensions scale with fatness
-                    const shoulderWidth = 55 * scale * widthMultiplier;
-                    const chestWidth = 50 * scale * widthMultiplier;
-                    const waistWidth = 45 * scale * widthMultiplier;
-                    const hipWidth = 48 * scale * widthMultiplier;
-                    
-                    const shoulderY = 65 * scale;
-                    const chestY = 90 * scale;
-                    const waistY = 120 * scale;
-                    const hipY = 145 * scale;
-                    
-                    // Belly protrusion based on fatness
-                    const bellyBulge = 8 * scale * (fatnessLevel / 100);
-                    
-                    // Legs
-                    const thighWidth = 18 * scale * widthMultiplier;
-                    const calfWidth = 12 * scale * widthMultiplier;
-                    const legSpacing = 12 * scale;
-                    const legBottom = 195 * scale;
-                    const kneeY = 165 * scale;
-                    
-                    // Arms - bicep size increases with muscle definition
-                    const baseArmWidth = 10 * scale;
-                    const bicepBulge = 6 * scale * muscleDefinition; // Bicep gets bigger as you get leaner
-                    const upperArmWidth = baseArmWidth + bicepBulge;
-                    const forearmWidth = 8 * scale + (2 * scale * muscleDefinition);
-                    
-                    const centerX = 100 * scale;
-                    const svgWidth = 200 * scale;
-                    const svgHeight = 200 * scale;
-                    
-                    // Unique ID for this SVG's gradients and animations
-                    const uniqueId = Math.random().toString(36).substr(2, 9);
-                    
-                    // Build the SVG path for the body
-                    let svg = '<svg width="' + svgWidth + '" height="' + svgHeight + '" viewBox="0 0 ' + svgWidth + ' ' + svgHeight + '" class="body-svg">';
-                    
-                    // Add gradient and animation definitions
-                    svg += '<defs>';
-                    svg += '<linearGradient id="bodyGradient' + uniqueId + '" x1="0%" y1="0%" x2="100%" y2="0%">';
-                    svg += '<stop offset="0%" style="stop-color:' + color + ';stop-opacity:0.8" />';
-                    svg += '<stop offset="50%" style="stop-color:' + color + ';stop-opacity:1" />';
-                    svg += '<stop offset="100%" style="stop-color:' + color + ';stop-opacity:0.8" />';
-                    svg += '</linearGradient>';
-                    svg += '</defs>';
-                    
-                    // Head
-                    svg += '<circle cx="' + centerX + '" cy="' + headCY + '" r="' + headRadius + '" fill="url(#bodyGradient' + uniqueId + ')" />';
-                    
-                    // Body path using curves
-                    let bodyPath = 'M ' + (centerX - neckWidth/2) + ' ' + neckTop;
-                    
-                    // Left side of body
-                    bodyPath += ' L ' + (centerX - neckWidth/2) + ' ' + neckBottom;
-                    bodyPath += ' L ' + (centerX - shoulderWidth) + ' ' + shoulderY;
-                    bodyPath += ' Q ' + (centerX - chestWidth - 5*scale) + ' ' + chestY + ' ' + (centerX - waistWidth - bellyBulge) + ' ' + waistY;
-                    bodyPath += ' Q ' + (centerX - hipWidth) + ' ' + (hipY - 10*scale) + ' ' + (centerX - hipWidth/2 - legSpacing) + ' ' + hipY;
-                    
-                    // Left leg
-                    bodyPath += ' L ' + (centerX - thighWidth - legSpacing) + ' ' + hipY;
-                    bodyPath += ' Q ' + (centerX - thighWidth - legSpacing - 2*scale) + ' ' + kneeY + ' ' + (centerX - calfWidth - legSpacing) + ' ' + kneeY;
-                    bodyPath += ' L ' + (centerX - calfWidth - legSpacing) + ' ' + legBottom;
-                    bodyPath += ' L ' + (centerX - legSpacing) + ' ' + legBottom;
-                    bodyPath += ' L ' + (centerX - legSpacing) + ' ' + kneeY;
-                    bodyPath += ' Q ' + (centerX - legSpacing + 2*scale) + ' ' + kneeY + ' ' + (centerX - legSpacing) + ' ' + hipY;
-                    
-                    // Crotch area
-                    bodyPath += ' L ' + (centerX + legSpacing) + ' ' + hipY;
-                    
-                    // Right leg
-                    bodyPath += ' Q ' + (centerX + legSpacing - 2*scale) + ' ' + kneeY + ' ' + (centerX + legSpacing) + ' ' + kneeY;
-                    bodyPath += ' L ' + (centerX + legSpacing) + ' ' + legBottom;
-                    bodyPath += ' L ' + (centerX + calfWidth + legSpacing) + ' ' + legBottom;
-                    bodyPath += ' L ' + (centerX + calfWidth + legSpacing) + ' ' + kneeY;
-                    bodyPath += ' Q ' + (centerX + thighWidth + legSpacing + 2*scale) + ' ' + kneeY + ' ' + (centerX + thighWidth + legSpacing) + ' ' + hipY;
-                    bodyPath += ' L ' + (centerX + hipWidth/2 + legSpacing) + ' ' + hipY;
-                    
-                    // Right side of body (going up)
-                    bodyPath += ' Q ' + (centerX + hipWidth) + ' ' + (hipY - 10*scale) + ' ' + (centerX + waistWidth + bellyBulge) + ' ' + waistY;
-                    bodyPath += ' Q ' + (centerX + chestWidth + 5*scale) + ' ' + chestY + ' ' + (centerX + shoulderWidth) + ' ' + shoulderY;
-                    bodyPath += ' L ' + (centerX + neckWidth/2) + ' ' + neckBottom;
-                    bodyPath += ' L ' + (centerX + neckWidth/2) + ' ' + neckTop;
-                    bodyPath += ' Z';
-                    
-                    svg += '<path d="' + bodyPath + '" fill="url(#bodyGradient' + uniqueId + ')" />';
-                    
-                    // Calculate arm positions based on flex level
-                    // flexLevel 0 = arms down at sides
-                    // flexLevel 100 = arms up in full bicep flex pose
-                    const flexRatio = flexLevel / 100;
-                    
-                    // Animation duration - slower flex looks more natural
-                    const animDuration = '2s';
-                    
-                    // LEFT ARM - Flexing bicep pose
-                    const leftShoulderX = centerX - shoulderWidth;
-                    const leftShoulderY = shoulderY;
-                    
-                    // Upper arm rotates from pointing down (-80deg) to pointing up-left (-160deg)
-                    const leftUpperArmAngle = -80 + (-80 * flexRatio); // -80 to -160
-                    const leftUpperArmLength = 28 * scale;
-                    
-                    // Calculate upper arm end point
-                    const leftElbowX = leftShoulderX + Math.cos(leftUpperArmAngle * Math.PI / 180) * leftUpperArmLength;
-                    const leftElbowY = leftShoulderY - Math.sin(leftUpperArmAngle * Math.PI / 180) * leftUpperArmLength;
-                    
-                    // Forearm rotates to point up when flexing
-                    const leftForearmAngle = -100 + (70 * flexRatio); // forearm angle relative to upper arm
-                    const leftForearmLength = 25 * scale;
-                    
-                    const leftHandX = leftElbowX + Math.cos((leftUpperArmAngle + leftForearmAngle + 180) * Math.PI / 180) * leftForearmLength;
-                    const leftHandY = leftElbowY - Math.sin((leftUpperArmAngle + leftForearmAngle + 180) * Math.PI / 180) * leftForearmLength;
-                    
-                    // Draw left upper arm
-                    svg += '<g class="left-arm">';
-                    // Upper arm
-                    svg += '<line x1="' + leftShoulderX + '" y1="' + leftShoulderY + '" x2="' + leftElbowX + '" y2="' + leftElbowY + '" ';
-                    svg += 'stroke="url(#bodyGradient' + uniqueId + ')" stroke-width="' + upperArmWidth + '" stroke-linecap="round">';
-                    if (flexLevel > 0) {
-                        svg += '<animate attributeName="stroke-width" values="' + upperArmWidth + ';' + (upperArmWidth * 1.15) + ';' + upperArmWidth + '" dur="' + animDuration + '" repeatCount="indefinite" />';
-                    }
-                    svg += '</line>';
-                    
-                    // Bicep bulge when flexing
-                    if (flexLevel > 20) {
-                        const bicepX = (leftShoulderX + leftElbowX) / 2 + (5 * scale * flexRatio);
-                        const bicepY = (leftShoulderY + leftElbowY) / 2 - (3 * scale * flexRatio);
-                        const bicepSize = (4 + 6 * flexRatio) * scale * muscleDefinition;
-                        svg += '<ellipse cx="' + bicepX + '" cy="' + bicepY + '" rx="' + (bicepSize * 0.8) + '" ry="' + bicepSize + '" fill="url(#bodyGradient' + uniqueId + ')" transform="rotate(' + (leftUpperArmAngle + 90) + ' ' + bicepX + ' ' + bicepY + ')">';
-                        svg += '<animate attributeName="ry" values="' + bicepSize + ';' + (bicepSize * 1.2) + ';' + bicepSize + '" dur="' + animDuration + '" repeatCount="indefinite" />';
-                        svg += '</ellipse>';
+                    // Determine status message based on progress and time remaining
+                    let status, statusEmoji;
+                    if (progress >= 100) {
+                        status = "BEACH READY! 🎉";
+                        statusEmoji = "🏆";
+                    } else if (progress >= 75) {
+                        status = "Almost There!";
+                        statusEmoji = "🔥";
+                    } else if (progress >= 50) {
+                        status = "Halfway Point!";
+                        statusEmoji = "💪";
+                    } else if (progress >= 25) {
+                        status = "Building Momentum";
+                        statusEmoji = "📈";
+                    } else if (progress > 0) {
+                        status = "Just Getting Started";
+                        statusEmoji = "🚀";
+                    } else {
+                        status = "Set Goals to Begin!";
+                        statusEmoji = "🎯";
                     }
                     
-                    // Forearm
-                    svg += '<line x1="' + leftElbowX + '" y1="' + leftElbowY + '" x2="' + leftHandX + '" y2="' + leftHandY + '" ';
-                    svg += 'stroke="url(#bodyGradient' + uniqueId + ')" stroke-width="' + forearmWidth + '" stroke-linecap="round" />';
+                    // SVG gauge parameters
+                    const width = 180;
+                    const height = 100;
+                    const cx = width / 2;
+                    const cy = height - 10;
+                    const radius = 70;
+                    const strokeWidth = 12;
                     
-                    // Fist
-                    svg += '<circle cx="' + leftHandX + '" cy="' + leftHandY + '" r="' + (6 * scale) + '" fill="url(#bodyGradient' + uniqueId + ')" />';
-                    svg += '</g>';
+                    // Arc calculations (180 degree arc, from left to right)
+                    const startAngle = Math.PI; // 180 degrees (left)
+                    const endAngle = 0; // 0 degrees (right)
+                    const progressAngle = startAngle - (progress / 100) * Math.PI;
                     
-                    // RIGHT ARM - Flexing bicep pose (mirrored)
-                    const rightShoulderX = centerX + shoulderWidth;
-                    const rightShoulderY = shoulderY;
+                    // Calculate arc path
+                    const bgStartX = cx + radius * Math.cos(startAngle);
+                    const bgStartY = cy - radius * Math.sin(startAngle);
+                    const bgEndX = cx + radius * Math.cos(endAngle);
+                    const bgEndY = cy - radius * Math.sin(endAngle);
                     
-                    // Upper arm rotates from pointing down (260deg) to pointing up-right (340deg)
-                    const rightUpperArmAngle = -100 + (80 * flexRatio); // -100 to -20
-                    const rightUpperArmLength = 28 * scale;
+                    const progressEndX = cx + radius * Math.cos(progressAngle);
+                    const progressEndY = cy - radius * Math.sin(progressAngle);
                     
-                    // Calculate upper arm end point
-                    const rightElbowX = rightShoulderX + Math.cos(rightUpperArmAngle * Math.PI / 180) * rightUpperArmLength;
-                    const rightElbowY = rightShoulderY - Math.sin(rightUpperArmAngle * Math.PI / 180) * rightUpperArmLength;
+                    // Large arc flag
+                    const largeArcFlag = progress > 50 ? 1 : 0;
                     
-                    // Forearm
-                    const rightForearmAngle = 100 - (70 * flexRatio);
-                    const rightForearmLength = 25 * scale;
+                    let html = '<div class="beach-meter-container">';
+                    html += '<div class="beach-meter-title">🏖️ Beach Body Meter 🏖️</div>';
+                    html += '<div class="beach-meter-subtitle">' + daysLeft + ' days until cruise!</div>';
                     
-                    const rightHandX = rightElbowX + Math.cos((rightUpperArmAngle + rightForearmAngle + 180) * Math.PI / 180) * rightForearmLength;
-                    const rightHandY = rightElbowY - Math.sin((rightUpperArmAngle + rightForearmAngle + 180) * Math.PI / 180) * rightForearmLength;
+                    // SVG Gauge
+                    html += '<div class="beach-meter-gauge">';
+                    html += '<svg class="beach-meter-svg" viewBox="0 0 ' + width + ' ' + height + '">';
                     
-                    // Draw right arm
-                    svg += '<g class="right-arm">';
-                    // Upper arm
-                    svg += '<line x1="' + rightShoulderX + '" y1="' + rightShoulderY + '" x2="' + rightElbowX + '" y2="' + rightElbowY + '" ';
-                    svg += 'stroke="url(#bodyGradient' + uniqueId + ')" stroke-width="' + upperArmWidth + '" stroke-linecap="round">';
-                    if (flexLevel > 0) {
-                        svg += '<animate attributeName="stroke-width" values="' + upperArmWidth + ';' + (upperArmWidth * 1.15) + ';' + upperArmWidth + '" dur="' + animDuration + '" repeatCount="indefinite" />';
-                    }
-                    svg += '</line>';
+                    // Background arc (gray)
+                    html += '<path d="M ' + bgStartX + ' ' + bgStartY + ' A ' + radius + ' ' + radius + ' 0 0 1 ' + bgEndX + ' ' + bgEndY + '" ';
+                    html += 'fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="' + strokeWidth + '" stroke-linecap="round" />';
                     
-                    // Bicep bulge when flexing
-                    if (flexLevel > 20) {
-                        const bicepX = (rightShoulderX + rightElbowX) / 2 - (5 * scale * flexRatio);
-                        const bicepY = (rightShoulderY + rightElbowY) / 2 - (3 * scale * flexRatio);
-                        const bicepSize = (4 + 6 * flexRatio) * scale * muscleDefinition;
-                        svg += '<ellipse cx="' + bicepX + '" cy="' + bicepY + '" rx="' + (bicepSize * 0.8) + '" ry="' + bicepSize + '" fill="url(#bodyGradient' + uniqueId + ')" transform="rotate(' + (-rightUpperArmAngle - 90) + ' ' + bicepX + ' ' + bicepY + ')">';
-                        svg += '<animate attributeName="ry" values="' + bicepSize + ';' + (bicepSize * 1.2) + ';' + bicepSize + '" dur="' + animDuration + '" repeatCount="indefinite" />';
-                        svg += '</ellipse>';
+                    // Progress arc (white/yellow gradient effect)
+                    if (progress > 0) {
+                        html += '<path d="M ' + bgStartX + ' ' + bgStartY + ' A ' + radius + ' ' + radius + ' 0 ' + largeArcFlag + ' 1 ' + progressEndX + ' ' + progressEndY + '" ';
+                        html += 'fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="' + strokeWidth + '" stroke-linecap="round" />';
                     }
                     
-                    // Forearm
-                    svg += '<line x1="' + rightElbowX + '" y1="' + rightElbowY + '" x2="' + rightHandX + '" y2="' + rightHandY + '" ';
-                    svg += 'stroke="url(#bodyGradient' + uniqueId + ')" stroke-width="' + forearmWidth + '" stroke-linecap="round" />';
+                    // Gauge markers
+                    for (let i = 0; i <= 4; i++) {
+                        const markerAngle = startAngle - (i / 4) * Math.PI;
+                        const innerRadius = radius - strokeWidth/2 - 5;
+                        const outerRadius = radius - strokeWidth/2 - 12;
+                        const x1 = cx + innerRadius * Math.cos(markerAngle);
+                        const y1 = cy - innerRadius * Math.sin(markerAngle);
+                        const x2 = cx + outerRadius * Math.cos(markerAngle);
+                        const y2 = cy - outerRadius * Math.sin(markerAngle);
+                        html += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="rgba(255,255,255,0.5)" stroke-width="2" />';
+                    }
                     
-                    // Fist
-                    svg += '<circle cx="' + rightHandX + '" cy="' + rightHandY + '" r="' + (6 * scale) + '" fill="url(#bodyGradient' + uniqueId + ')" />';
-                    svg += '</g>';
+                    // Center emoji
+                    html += '<text x="' + cx + '" y="' + (cy - 25) + '" text-anchor="middle" font-size="24">' + statusEmoji + '</text>';
                     
-                    svg += '</svg>';
-                    return svg;
+                    html += '</svg>';
+                    html += '</div>';
+                    
+                    // Percentage display
+                    html += '<div class="beach-meter-percentage">' + progress.toFixed(0) + '%</div>';
+                    html += '<div class="beach-meter-label">Goal Progress</div>';
+                    
+                    // Status badge
+                    html += '<div class="beach-meter-status">' + status + '</div>';
+                    
+                    // Details section
+                    html += '<div class="beach-meter-details">';
+                    html += '<div class="beach-meter-detail-row"><span>Pounds Lost:</span><span>' + groupProgress.totalLost.toFixed(1) + ' lbs</span></div>';
+                    html += '<div class="beach-meter-detail-row"><span>Goal:</span><span>' + groupProgress.totalToLose.toFixed(1) + ' lbs</span></div>';
+                    html += '<div class="beach-meter-detail-row"><span>Remaining:</span><span>' + Math.max(0, groupProgress.totalToLose - groupProgress.totalLost).toFixed(1) + ' lbs</span></div>';
+                    html += '</div>';
+                    
+                    html += '</div>';
+                    return html;
                 }
 
                 function formatLastEntry(timestamp) {
@@ -2159,6 +2076,7 @@
                         const poundsLeader = getLeaderByPounds();
                         const pctLeader = getLeaderByPercentage();
                         const dailyRecipe = getDailyRecipe();
+                        const groupProgress = getGroupProgress();
 
                         let html = '<div class="container">';
                         html += '<div class="header">';
@@ -2195,6 +2113,17 @@
                             html += '</div>';
                             html += '</div>';
                         }
+
+                        // Main layout with sidebar
+                        html += '<div class="main-layout">';
+                        
+                        // Left sidebar with Beach Body Meter
+                        html += '<div class="sidebar-left">';
+                        html += generateBeachMeterHTML(groupProgress);
+                        html += '</div>';
+                        
+                        // Main content area
+                        html += '<div class="main-content">';
 
                         html += '<div class="grid">';
                         people.forEach(person => {
@@ -2297,77 +2226,7 @@
                             html += '</div>';
                         }
 
-                        // Body Transformation Visualization (between chart and table)
-                        const groupProgress = getGroupProgress();
-                        if (hasData && groupProgress.hasGoals) {
-                            const currentFatness = 100 - groupProgress.progress; // 100 = fattest (start), 0 = skinniest (goal)
-                            
-                            html += '<div class="body-viz-container">';
-                            html += '<h2 class="body-viz-title">💪 Group Transformation Progress 💪</h2>';
-                            html += '<p class="body-viz-subtitle">Watch the crew get shredded together!</p>';
-                            
-                            html += '<div class="body-viz-wrapper">';
-                            
-                            // Starting figure (fattest, no flex)
-                            html += '<div class="body-figure">';
-                            html += '<div class="body-figure-label">Starting</div>';
-                            html += generateBodySVG(100, '#94a3b8', 140, 0);
-                            html += '</div>';
-                            
-                            // Current progress figure (flex based on progress)
-                            html += '<div class="body-figure">';
-                            html += '<div class="body-figure-label">Current (' + groupProgress.progress.toFixed(0) + '%)</div>';
-                            html += generateBodySVG(currentFatness, '#6366f1', 160, groupProgress.progress);
-                            html += '</div>';
-                            
-                            // Goal figure (skinniest, full flex)
-                            html += '<div class="body-figure">';
-                            html += '<div class="body-figure-label">Goal</div>';
-                            html += generateBodySVG(0, '#10b981', 140, 100);
-                            html += '</div>';
-                            
-                            html += '</div>'; // end body-viz-wrapper
-                            
-                            html += '<div class="body-stats">';
-                            html += '<div class="body-stat">';
-                            html += '<div class="body-stat-value">' + groupProgress.totalLost.toFixed(1) + '</div>';
-                            html += '<div class="body-stat-label">Pounds Lost</div>';
-                            html += '</div>';
-                            html += '<div class="body-stat">';
-                            html += '<div class="body-stat-value">' + groupProgress.totalToLose.toFixed(1) + '</div>';
-                            html += '<div class="body-stat-label">Total Goal</div>';
-                            html += '</div>';
-                            html += '<div class="body-stat">';
-                            html += '<div class="body-stat-value goal">' + (groupProgress.totalToLose - groupProgress.totalLost).toFixed(1) + '</div>';
-                            html += '<div class="body-stat-label">Pounds To Go</div>';
-                            html += '</div>';
-                            html += '</div>'; // end body-stats
-                            
-                            html += '</div>'; // end body-viz-container
-                        }
-
-                        if (hasData) {
-                            html += '<div class="table-container">';
-                            html += '<div class="table-title">';
-                            html += '<span>Weight Entry History</span>';
-                            html += '<button class="btn-download" onclick="downloadCSV()">📥 Download CSV</button>';
-                            html += '</div>';
-                            html += '<table>';
-                            html += '<thead><tr><th>Name</th><th>Weight</th><th>Timestamp</th></tr></thead>';
-                            html += '<tbody>';
-                            getAllEntries().forEach(entry => {
-                                html += '<tr>';
-                                html += '<td class="name-cell" style="color: ' + colors[entry.person] + '">' + entry.person + '</td>';
-                                html += '<td>' + entry.weight + ' lbs</td>';
-                                html += '<td>' + formatTimestamp(entry.timestamp) + '</td>';
-                                html += '</tr>';
-                            });
-                            html += '</tbody>';
-                            html += '</table>';
-                            html += '</div>';
-                        }
-                        
-                        // NEW: Message Board Section Restored
+                        // Message Board Section (moved to after chart)
                         html += '<div class="message-board">';
                         html += '<h2 class="message-board-title">💬 Message Board</h2>';
                         
@@ -2399,6 +2258,30 @@
                         }
                         html += '</div>';
                         html += '</div>';
+
+                        if (hasData) {
+                            html += '<div class="table-container">';
+                            html += '<div class="table-title">';
+                            html += '<span>Weight Entry History</span>';
+                            html += '<button class="btn-download" onclick="downloadCSV()">📥 Download CSV</button>';
+                            html += '</div>';
+                            html += '<table>';
+                            html += '<thead><tr><th>Name</th><th>Weight</th><th>Timestamp</th></tr></thead>';
+                            html += '<tbody>';
+                            getAllEntries().forEach(entry => {
+                                html += '<tr>';
+                                html += '<td class="name-cell" style="color: ' + colors[entry.person] + '">' + entry.person + '</td>';
+                                html += '<td>' + entry.weight + ' lbs</td>';
+                                html += '<td>' + formatTimestamp(entry.timestamp) + '</td>';
+                                html += '</tr>';
+                            });
+                            html += '</tbody>';
+                            html += '</table>';
+                            html += '</div>';
+                        }
+
+                        html += '</div>'; // end main-content
+                        html += '</div>'; // end main-layout
 
                         // FIXED: Reconstructed the Recipe section
                         html += '<div class="retroactive-entry">';
